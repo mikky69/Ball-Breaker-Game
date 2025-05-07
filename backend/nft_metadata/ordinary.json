@@ -1,0 +1,10 @@
+{
+  "name": "Ordinary Ball",
+  "symbol": "BALL",
+  "description": "The ordinary ball for Ball Block Breaker. Basic and classic.",
+  "image": "ipfs://<YOUR_CID>/images/ordinary_ball.svg",
+  "attributes": [
+    { "trait_type": "Rarity", "value": "Ordinary" },
+    { "trait_type": "Color", "value": "#FFFFFF" }
+  ]
+}
