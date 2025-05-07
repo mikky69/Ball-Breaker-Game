@@ -1,0 +1,24 @@
+[build]
+  publish = "."
+  command = ""
+
+[dev]
+  command = "npm run start"
+  port = 3000
+  publish = "."
+
+[[redirects]]
+  from = "/*"
+  to = "/newgame.html"
+  status = 200
+  force = false
+
+[dev.proxy]
+  # No proxy needed for static site
+
+[build.environment]
+  NODE_VERSION = "16"
+  NPM_VERSION = "8"
+
+[functions]
+  # No serverless functions needed for static site

@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Copied from game.html, NFT Market section will render balls, only the section shell. -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="wallet-extension" content="none">
+    <title>Ball Block Breaker</title>
+    <style>
+        .debug-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        .debug-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    
+    <!-- Load Buffer -->
+    <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/dist/buffer.min.js"></script>
+    
+    <!-- Load Solana Web3 -->
+    <script src="https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.min.js"></script>
+    
+    <!-- Load SPL Token -->
+    <script src="https://unpkg.com/@solana/spl-token@0.3.10/lib/index.iife.js"></script>
+    
+    <!-- Initialize globals -->
+    <script>
+        // Make sure all required libraries are available
+        function checkLibraries() {
+            const required = {
+                Buffer: typeof Buffer !== 'undefined',
+                solanaWeb3: typeof solanaWeb3 !== 'undefined',
+                splToken: typeof splToken !== 'undefined'
+            };
+            
+            console.log('=== Library Check ===');
+            console.log('Buffer:', required.Buffer);
+            console.log('solanaWeb3:', required.solanaWeb3);
+            console.log('splToken:', required.splToken);
+            
+            // Set globals
+            window.Buffer = window.Buffer || Buffer;
+            window.solanaWeb3 = window.solanaWeb3 || solanaWeb3;
+            window.splToken = window.splToken || splToken;
+            
+            return required.Buffer && required.solanaWeb3 && required.splToken;
+        }
+        
+        // Check libraries after a short delay to ensure they're loaded
+        setTimeout(() => {
+            const allLoaded = checkLibraries();
+            if (allLoaded) {
+                console.log('All libraries loaded successfully!');
+                window.appInitialized = true;
+            } else {
+                console.error('Failed to load all required libraries. Please refresh the page.');
+            }
+        }, 1000);
+    </script>
+    
+    <!-- Initialize global variables -->
+    <script>
+        // This function will be called when all libraries are loaded
+        function initializeApp() {
+            console.log('=== Initializing Application ===');
+            
+            // Make sure all required libraries are available
+            const required = {
+                Buffer: typeof Buffer !== 'undefined' || typeof window.Buffer !== 'undefined',
+                solanaWeb3: typeof solanaWeb3 !== 'undefined' || typeof window.solanaWeb3 !== 'undefined',
+                splToken: typeof splToken !== 'undefined' || typeof window.splToken !== 'undefined'
+            };
+            
+            // Set global references
+            window.Buffer = window.Buffer || Buffer;
+            window.solanaWeb3 = window.solanaWeb3 || solanaWeb3;
+            window.splToken = window.splToken || splToken;
+            
+            // Log status
+            console.log('=== Library Status ===');
+            console.log('Buffer:', !!window.Buffer);
+            console.log('solanaWeb3:', !!window.solanaWeb3);
+            console.log('splToken:', !!window.splToken);
+            
+            // Check if all required libraries are available
+            const allLoaded = required.Buffer && required.solanaWeb3 && required.splToken;
+            
+            if (!allLoaded) {
+                console.error('Failed to load all required libraries. Please refresh the page.');
+                return;
+            }
+            
+            console.log('All libraries loaded successfully!');
+            window.appInitialized = true;
+            
+            // Initialize wallet and other app components
+            if (typeof initializeWallet === 'function') {
+                initializeWallet();
+            }
+        }
+        
+        // Run initialization after a short delay to ensure all scripts are loaded
+        setTimeout(initializeApp, 1000);
+    </script>
+    
+    <script>
+        // Make Buffer globally available
+        window.Buffer = window.Buffer || {};
+        
+        // Create connection to Solana devnet
+        const connection = new solanaWeb3.Connection(
+            solanaWeb3.clusterApiUrl('devnet'),
+            'confirmed'
+        );
+        
+        // Debug function to check loaded libraries
+        window.checkLibraries = function() {
+            console.log('===== Environment Check =====');
+            console.log('window.solanaWeb3:', window.solanaWeb3 ? '✓ Loaded' : '✗ Not found');
+            console.log('window.Metaplex:', window.Metaplex ? '✓ Loaded' : '✗ Not found');
+            console.log('window.metaplex:', window.metaplex ? '✓ Loaded' : '✗ Not found');
+            console.log('window.Buffer:', typeof window.Buffer);
+            
+            if (window.solana) {
+                console.log('Solana wallet detected:', {
+                    isPhantom: window.solana.isPhantom,
+                    isConnected: window.solana.isConnected,
+                    publicKey: window.solana.publicKey?.toString()
+                });
+            } else {
+                console.warn('No Solana wallet detected');
+            }
+            
+            console.log('Available window properties:', Object.keys(window).filter(k => 
+                k.toLowerCase().includes('meta') || 
+                k.toLowerCase().includes('sol') ||
+                k === 'Buffer' ||
+                k === 'Metaplex'
+            ));
+            
+            console.log('===========================');
+            
+            // Try to initialize Metaplex if possible
+            try {
+                const metaplex = window.metaplex || window.Metaplex;
+                if (metaplex) {
+                    console.log('Metaplex library found. Version:', metaplex.VERSION || 'unknown');
+                    console.log('Trying to create instance...');
+                    
+                    const connection = new solanaWeb3.Connection(
+                        solanaWeb3.clusterApiUrl('devnet'),
+                        'confirmed'
+                    );
+                    
+                    const mx = metaplex.Metaplex.make(connection, {
+                        cluster: 'devnet',
+                        identity: window.solana
+                    });
+                    
+                    console.log('Metaplex instance created successfully');
+                    return mx;
+                } else {
+                    console.error('Metaplex library not found in expected locations');
+                }
+            } catch (e) {
+                console.error('Error creating Metaplex instance:', e);
+            }
+            
+            return null;
+        };
+        // Debug: Log when scripts start loading
+        console.log('Starting script execution...');
+        
+        // Function to check required libraries with detailed error reporting
+        async function checkRequiredLibraries() {
+            console.log('=== Checking Required Libraries ===');
+            
+            // Check each library with detailed logging
+            const checks = {
+                Buffer: {
+                    global: typeof Buffer !== 'undefined',
+                    window: typeof window.Buffer !== 'undefined',
+                    message: 'Buffer is required for cryptographic operations'
+                },
+                solanaWeb3: {
+                    global: typeof solanaWeb3 !== 'undefined',
+                    window: typeof window.solanaWeb3 !== 'undefined',
+                    message: 'Solana Web3.js is required for blockchain interactions'
+                },
+                splToken: {
+                    global: typeof splToken !== 'undefined',
+                    window: typeof window.splToken !== 'undefined',
+                    message: 'SPL Token library is required for NFT operations'
+                }
+            };
+            
+            // Log detailed status of each library
+            let allChecksPassed = true;
+            for (const [lib, check] of Object.entries(checks)) {
+                const isAvailable = check.global || check.window;
+                console.log(`${lib}: ${isAvailable ? '✅' : '❌'} (global: ${check.global}, window: ${check.window})`);
+                
+                if (!isAvailable) {
+                    console.error(`Missing library: ${lib} - ${check.message}`);
+                    allChecksPassed = false;
+                }
+            }
+            
+            // Set global references for consistency
+            if (!window.splToken && typeof splToken !== 'undefined') {
+                window.splToken = splToken;
+            }
+            
+            if (!window.Buffer && typeof Buffer !== 'undefined') {
+                window.Buffer = Buffer;
+            }
+            
+            if (!window.solanaWeb3 && typeof solanaWeb3 !== 'undefined') {
+                window.solanaWeb3 = solanaWeb3;
+            }
+            
+            if (!allChecksPassed) {
+                console.error('Some required libraries are missing. Please check the console for details.');
+                return false;
+            }
+            
+            console.log('✅ All required libraries are available and properly initialized');
+            return true;
+        }
+        
+        // Wait for window to be fully loaded
+        window.addEventListener('load', async () => {
+            console.log('Window loaded, initializing...');
+            
+            // Check required libraries but don't show error to user
+            try {
+                await checkRequiredLibraries();
+            } catch (error) {
+                console.warn('Some optional libraries failed to load:', error.message);
+                // Continue execution even if some libraries fail to load
+            }
+            
+            console.log('Application initialized successfully');
+            
+            // Initialize wallet
+            async function initializeWallet() {
+                try {
+                    if (!window.solana) {
+                        console.error('Phantom wallet not found');
+                        return false;
+                    }
+                    
+                    // Check if already connected
+                    if (window.solana.isConnected) {
+                        console.log('Wallet already connected');
+                    } else {
+                        // Request connection if not connected
+                        await window.solana.connect();
+                        console.log('Wallet connected successfully');
+                    }
+                    
+                    // Set up wallet event listeners
+                    window.solana.on('accountChanged', () => {
+                        console.log('Account changed, updating wallet...');
+                        window.location.reload();
+                    });
+                    
+                    window.solana.on('disconnect', () => {
+                        console.log('Wallet disconnected');
+                        window.location.reload();
+                    });
+                    
+                    return true;
+                    
+                } catch (error) {
+                    console.error('Failed to initialize wallet:', error);
+                    return false;
+                }
+            }
+            
+            // Initialize wallet and show status
+            initializeWallet().then(success => {
+                if (success) {
+                    console.log('Wallet initialized successfully');
+                } else {
+                    console.warn('Wallet initialization failed');
+                }
+            });
+            
+            console.log('Application initialization complete');
+            
+            // Show success message
+            const successDiv = document.createElement('div');
+            successDiv.style.position = 'fixed';
+            successDiv.style.top = '10px';
+            successDiv.style.right = '10px';
+            successDiv.style.background = 'green';
+            successDiv.style.color = 'white';
+            successDiv.style.padding = '10px';
+            successDiv.style.borderRadius = '5px';
+            successDiv.style.zIndex = '10000';
+            successDiv.textContent = 'Application initialized successfully!';
+            document.body.appendChild(successDiv);
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                successDiv.style.opacity = '0';
+                setTimeout(() => document.body.removeChild(successDiv), 500);
+            }, 3000);
+        });
+    </script>
+    <script>
+        // --- Phantom Wallet Connection Logic (Solana only, robust checks) ---
+        function isPhantomInstalled() {
+            return window.solana && window.solana.isPhantom;
+        }
+        
+        async function connectWallet() {
+            const walletErrorDiv = document.getElementById('walletError');
+            walletErrorDiv.textContent = '';
+            
+            if (!isPhantomInstalled()) {
+                walletErrorDiv.textContent = 'Phantom Wallet not installed!';
+                return;
+            }
+            
+            try {
+                const resp = await window.solana.connect();
+                const walletAddress = resp.publicKey.toString();
+                document.getElementById('walletAddress').textContent = 'Connected: ' + walletAddress;
+                document.getElementById('phantomWallet').style.display = 'none';
+                document.getElementById('disconnectWallet').style.display = 'inline-block';
+                loadPowerupCount();
+                
+                const el = document.getElementById('powerupCount');
+                if (el) el.innerText = 'Powerpoint ' + Math.max(0, powerupCount);
+            } catch (err) {
+                walletErrorDiv.textContent = 'Wallet connection failed!';
+                console.error('Wallet connection error:', err);
+            }
+        }
+        function disconnectWallet() {
+            if (window.solana && window.solana.disconnect) {
+                window.solana.disconnect();
+            }
+            document.getElementById('walletAddress').textContent = '';
+            document.getElementById('phantomWallet').style.display = '';
+            document.getElementById('disconnectWallet').style.display = 'none';
+            onWalletDisconnect();
+        }
+        // Remove TronWeb/TronLink/Tron code if present
+        if (window.TronWeb || window.tronWeb || window.tronLink) {
+            try {
+                window.TronWeb = undefined;
+                window.tronWeb = undefined;
+                window.tronLink = undefined;
+            } catch(e) {}
+        }
+        // Remove any global TronWeb errors from console
+        if (window.console && window.console.error) {
+            const origError = window.console.error;
+            window.console.error = function(...args) {
+                if (typeof args[0] === 'string' && args[0].includes('TronWeb')) return;
+                origError.apply(window.console, args);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const connectBtn = document.getElementById('phantomWallet');
+            const disconnectBtn = document.getElementById('disconnectWallet');
+            if (connectBtn) connectBtn.onclick = connectWallet;
+            if (disconnectBtn) disconnectBtn.onclick = disconnectWallet;
+            // Restore wallet UI if still connected
+            if (window.solana && window.solana.isConnected && window.solana.publicKey) {
+                document.getElementById('walletAddress').textContent = 'Connected: ' + window.solana.publicKey.toString();
+                document.getElementById('phantomWallet').style.display = 'none';
+                document.getElementById('disconnectWallet').style.display = 'inline-block';
+            }
+        });
+    </script>
+    <style>
+        html, body { font-size: 20px; }
+        body { margin: 0; padding: 0; background: #000; color: #fff; font-family: 'Press Start 2P', Arial, sans-serif; min-height: 100vh; overflow: hidden; background: radial-gradient(circle at center, #1a1a2e 0%, #000 100%); position: relative; }
+        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .star { position: absolute; background: #fff; border-radius: 50%; animation: twinkle 1s infinite; }
+        @keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .main-menu { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 40px 20px; text-align: center; }
+        .main-menu .logo { width: 370px; margin: 30px auto 10px auto; border-radius: 10px; box-shadow: 0 0 20px rgba(255, 255, 255, 0.2); display: block; }
+        .main-menu-btn { background: linear-gradient(45deg, #9945FF, #14F195); border: none; padding: 20px 60px; color: white; font-size: 1.3em; border-radius: 32px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; font-family: inherit; text-transform: uppercase; letter-spacing: 2px; margin: 30px 30px 0 30px; }
+        .main-menu-btn:hover { transform: translateY(-3px); box-shadow: 0 0 20px rgba(20, 241, 149, 0.5); }
+        .game-container, .landing-container, .multiplayer-container { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; padding: 20px; text-align: center; }
+        .logo { width: 300px; margin: 20px auto; border-radius: 10px; box-shadow: 0 0 20px rgba(255, 255, 255, 0.2); display: block; }
+        .wallet-connection { margin: 20px 0; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
+        .wallet-button { background: linear-gradient(45deg, #9945FF, #14F195); border: none; padding: 12px 24px; color: white; font-size: 1.1em; border-radius: 25px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; font-family: inherit; text-transform: uppercase; letter-spacing: 1px; margin: 5px; }
+        .wallet-button:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(153, 69, 255, 0.5); }
+        #walletAddress, #gameWalletAddress { color: #14F195; font-size: 1em; margin: 10px 0; }
+        #walletError, #walletDebug { color: #ff4444; margin-top: 10px; font-size: 1em; white-space: pre-wrap; }
+        .scoreboard { background: rgba(255, 255, 255, 0.1); padding: 18px 30px; border-radius: 14px; margin: 18px 0; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); display: flex; justify-content: space-around; align-items: center; font-size: 1.2em; }
+        .game-controls { margin: 18px 0 28px 0; display: flex; justify-content: center; gap: 28px; }
+        .game-controls button { padding: 14px 32px; border-radius: 24px; border: none; background: linear-gradient(45deg, #9945FF, #14F195); color: #fff; font-size: 1.1em; cursor: pointer; font-family: inherit; font-weight: bold; }
+        canvas { background: rgba(0, 0, 0, 0.5); border-radius: 12px; box-shadow: 0 0 30px rgba(153, 69, 255, 0.3); margin: 30px auto 0 auto; display: block; }
+        .multiplayer-container canvas { width: 1000px !important; height: 700px !important; }
+        .hidden { display: none !important; }
+        .leaderboard-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(40, 30, 70, 0.97);
+            border-radius: 18px;
+            box-shadow: 0 0 30px rgba(153, 69, 255, 0.25);
+            padding: 32px 28px 24px 28px;
+            text-align: center;
+        }
+        #globalLeaderboardTable {
+            margin: 0 auto 24px auto;
+            text-align: center;
+        }
+        #globalLeaderboardTable table {
+            margin: 0 auto;
+            border-collapse: separate;
+            border-spacing: 0 4px;
+            width: 90%;
+        }
+        #globalLeaderboardTable th, #globalLeaderboardTable td {
+            text-align: center;
+            padding: 8px 0;
+        }
+        #globalLeaderboardTable th {
+            color: #FFD700;
+            font-size: 1.1em;
+            font-weight: bold;
+            background: rgba(60,30,90,0.7);
+        }
+        #globalLeaderboardTable tr {
+            background: rgba(40,30,70,0.7);
+        }
+        #globalLeaderboardTable td {
+            color: #fff;
+            font-family: monospace;
+        }
+        #globalLeaderboardTable .highlight-wallet {
+            color: #FFD700 !important;
+            font-weight: bold;
+            text-shadow: 0 0 7px #FFD70099;
+        }
+        .user-leaderboard-section {
+            margin-bottom: 20px;
+        }
+        .nft-shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            justify-items: center;
+        }
+        .nft-ball-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+    </style>
+</head>
+<body tabindex="0">
+    <div id="stars" class="stars"></div>
+    <script>
+        // Starfield background logic
+        function createStars(count) {
+            const starsContainer = document.getElementById('stars');
+            starsContainer.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 2 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.opacity = Math.random() * 0.8 + 0.2;
+                star.style.animationDuration = `${0.8 + Math.random() * 1.2}s`;
+                starsContainer.appendChild(star);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            createStars(120);
+        });
+    </script>
+    <button id="musicBtn" style="position:fixed;top:16px;right:16px;z-index:1000;background:#222;color:#0ff;padding:10px 18px;border-radius:18px;font-size:18px;box-shadow:0 2px 8px #000;display:none;">Music On</button>
+    <div class="main-menu" id="mainMenuSection">
+        <div class="wallet-connection" style="margin-bottom:30px;">
+            <button id="phantomWallet" class="wallet-button">Connect Wallet</button>
+            <button id="disconnectWallet" class="wallet-button" style="display: none;">Disconnect Wallet</button>
+            <div id="walletAddress"></div>
+            <div id="walletError"></div>
+            <div id="walletDebug"></div>
+        </div>
+        <img src="BALL BLOCK BREAKER.jpg" alt="Ball Block Breaker" class="logo">
+        <button class="main-menu-btn" id="startGameFlow">Start</button>
+        <button class="main-menu-btn" id="openNFTMarket">NFT Market</button>
+        <button class="main-menu-btn" id="leaderboardBtn">Leaderboard</button>
+    </div>
+    <!-- NFT Market Section -->
+    <div class="landing-container hidden" id="nftMarketSection">
+        <img src="BALL BLOCK BREAKER.jpg" alt="Ball Block Breaker" class="logo">
+        <div style="color:#0ff;font-size:2em;margin-bottom:10px;">NFT MARKET</div>
+        <div id="nftError" style="color:#ff4444;font-size:1em;margin-bottom:8px;"></div>
+        <div class="nft-shop-grid" id="nftShopGrid"></div>
+        <button class="wallet-button" id="refreshNFTMarket">Refresh Market</button>
+        <button class="wallet-button" id="backToMenuFromNFTMarket">Back</button>
+    </div>
+    <!-- Mode Select Section -->
+    <div class="mode-select-container hidden" id="modeSelectSection" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:32px;">
+            <button class="main-menu-btn" id="singlePlayerBtn" style="min-width:260px;">Single Player</button>
+            <button class="main-menu-btn" id="multiPlayerBtn" style="min-width:260px;">Multiplayer</button>
+            <button class="wallet-button" id="backToMenuFromMode" style="min-width:180px;">Back</button>
+        </div>
+    </div>
+    <!-- Leaderboard Section -->
+    <div class="leaderboard-container hidden" id="leaderboardSection">
+        <h2>Leaderboard</h2>
+        <div style="margin-bottom:10px;font-size:1.1em;color:#FFD700;font-family:monospace;">Your Address: <span id="currentUserAddress"></span></div>
+        <div id="globalLeaderboardTable"></div>
+        <h3>Your Highscores</h3>
+        <div class="user-leaderboard-section">
+            <h4 style="color:#FFD700;margin-bottom:4px;">Single Player</h4>
+            <div id="userSingleLeaderboard"></div>
+        </div>
+        <div class="user-leaderboard-section">
+            <h4 style="color:#FFD700;margin-bottom:4px;">Multiplayer</h4>
+            <div id="userMultiLeaderboard"></div>
+        </div>
+        <button class="wallet-button" id="backToMenuFromLeaderboard">Back</button>
+    </div>
+    <!-- Game Section (Single Player) -->
+    <div class="game-container hidden" id="gameSection">
+        <div class="scoreboard">
+            <span>Score: <span id="score">0</span></span>
+            <span>Multiplier: <span id="multiplier">1.0x</span></span>
+            <span id="levelDisplay" style="color:#FFD700;font-weight:bold">Level: 1</span>
+            <span id="powerupCount" style="color:#FFD700;font-weight:bold">Powerpoint 0</span>
+            <span id="gameWalletAddress"></span>
+        </div>
+        <div class="game-controls">
+            <button id="restartBtn">Restart</button>
+            <button id="pauseBtn">Pause</button>
+            <button id="backBtn">Back to Menu</button>
+            <button id="musicBtn" style="margin-left: 12px;">Music On</button>
+            <button id="powerupBtn" style="margin-left: 12px;">Use Powerpoint</button>
+        </div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <button id="startGamePlay" class="wallet-button" style="margin-top:24px;">Start</button>
+        <div id="gameOverMsg" style="display: none; font-size: 36px; font-weight: bold; margin-top: 20px;"></div>
+    </div>
+    <!-- Multiplayer Section -->
+    <div class="multiplayer-container hidden" id="multiSection">
+        <h2 style="color:#FFD700">Multiplayer Mode</h2>
+        <div class="scoreboard">
+            <span>Player 1 Score: <span id="mpScore1">0</span></span>
+            <span>Player 2 Score: <span id="mpScore2">0</span></span>
+            <span id="mpLevelDisplay" style="color:#FFD700;font-weight:bold">Level: 1</span>
+        </div>
+        <div class="game-controls">
+            <button id="mpRestartBtn">Restart</button>
+            <button id="mpBackBtn">Back to Menu</button>
+            <select id="mpOpponentSelect">
+                <option value="cpu">Play vs Computer</option>
+                <option value="player">Play vs Player (same PC)</option>
+            </select>
+            <select id="mpDifficulty">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+            <button id="musicBtn" style="margin-left: 12px;">Music On</button>
+        </div>
+        <canvas id="mpCanvas" width="1000" height="700"></canvas>
+        <button id="startMultiGamePlay" class="wallet-button" style="margin-top:24px;">Start</button>
+        <div id="mpGameOverMsg" style="display: none; font-size: 36px; font-weight: bold; margin-top: 20px;"></div>
+    </div>
+    <audio id="bgMusic" src="sounds/Background.wav" loop></audio>
+    <audio id="hitSound" src="sounds/hit.mp3"></audio>
+    <audio id="breakSound" src="sounds/blockBreak.mp3"></audio>
+    <audio id="gameOverSound" src="sounds/gameOver.mp3"></audio>
+    <script>
+        // Section switching logic
+        const mainMenuSection = document.getElementById('mainMenuSection');
+        const nftMarketSection = document.getElementById('nftMarketSection');
+        const openNFTMarketBtn = document.getElementById('openNFTMarket');
+        const backToMenuFromShopBtn = document.getElementById('backToMenuFromNFTMarket');
+
+        openNFTMarketBtn.onclick = function() {
+            mainMenuSection.classList.add('hidden');
+            nftMarketSection.classList.remove('hidden');
+            renderNFTMarket();
+        };
+        backToMenuFromShopBtn.onclick = function() {
+            nftMarketSection.classList.add('hidden');
+            mainMenuSection.classList.remove('hidden');
+        };
+    </script>
+    <script>
+        // NFT MARKET LOGIC
+            // ===============================
+            // NFT MARKET BUY/MINT LOGIC (PHANTOM, SOL, BACKEND)
+            // ===============================
+            // Function to get metadata URI based on environment
+            function getMetadataUri(filename) {
+                // For local development
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    return `http://localhost:5500/nft-market/${filename}.json`;
+                }
+                // For production (replace with your actual IPFS or CDN URL)
+                return `https://ipfs.io/ipfs/YOUR_IPFS_CID/nft-market/${filename}.json`;
+            }
+
+            const NFT_MARKET_ITEMS = [
+                {
+                    name: 'Ordinary Ball',
+                    color: '#FF3B3B',
+                    price: 'FREE',
+                    rarity: 'ordinary',
+                    multiplier: 0.1,
+                    totalSupply: 0,  // Start with 0 minted
+                    maxSupply: 100000,
+                    description: 'Red Ball. Basic NFT. Limited Edition',
+                    owned: false,
+                    metadataUri: getMetadataUri('ordinary')
+                },
+                {
+                    name: 'Common Ball',
+                    color: '#00FF7F',
+                    price: 0.003431,  // $0.5
+                    rarity: 'common',
+                    multiplier: 1.0,
+                    totalSupply: 0,  // Start with 0 minted
+                    maxSupply: 50000,
+                    description: 'Green Ball. Common NFT. Limited Edition',
+                    metadataUri: getMetadataUri('common'),
+                    owned: false
+                },
+                {
+                    name: 'Uncommon Ball',
+                    color: '#007FFF',
+                    price: 0.03431,   // $5
+                    rarity: 'uncommon',
+                    multiplier: 1.5,
+                    totalSupply: 0,  // Start with 0 minted
+                    maxSupply: 30000,
+                    description: 'Blue Ball. Uncommon NFT. Limited Edition',
+                    metadataUri: getMetadataUri('uncommon'),
+                    owned: false
+                },
+                {
+                    name: 'Rare Ball',
+                    color: '#9932CC',
+                    price: 0.3431,    // $50
+                    rarity: 'rare',
+                    multiplier: 2.0,
+                    totalSupply: 0,  // Start with 0 minted
+                    maxSupply: 20000,
+                    description: 'Purple Ball. Rare NFT. Limited Edition',
+                    metadataUri: getMetadataUri('rare'),
+                    owned: false
+                },
+                {
+                    name: 'Legendary Ball',
+                    color: 'gold',
+                    price: 3.43,      // $500 (10x Rare)
+                    rarity: 'legendary',
+                    multiplier: 3.0,
+                    totalSupply: 0,  // Start with 0 minted
+                    maxSupply: 5000,
+                    description: 'Gold Ball. Legendary NFT. Limited Edition',
+                    metadataUri: getMetadataUri('legendary'),
+                    owned: false
+                }
+            ];
+
+            const creatorWallet = "4GP4w3DzugTWHMGJCQ3U8DqWjVQHgXajS9Px83jeUppG";
+            const backendUrl = "http://localhost:3000/api/mint";
+
+            // Function to assign free Ordinary Ball
+            async function assignFreeOrdinaryBall(walletAddress) {
+                const ordinaryBall = NFT_MARKET_ITEMS.find(item => item.rarity === 'ordinary');
+                if (!ordinaryBall) return false;
+                
+                // Check if user already owns an Ordinary Ball
+                const userOwnsOrdinaryBall = localStorage.getItem(`owns_${walletAddress}_ordinary`);
+                if (userOwnsOrdinaryBall === 'true') return true;
+                
+                // Check if there are any left
+                if (ordinaryBall.totalSupply >= ordinaryBall.maxSupply) {
+                    alert('Sorry, all free Ordinary Balls have been claimed!');
+                    return false;
+                }
+                
+                // Assign the free Ordinary Ball
+                ordinaryBall.totalSupply++;
+                localStorage.setItem(`owns_${walletAddress}_ordinary`, 'true');
+                ordinaryBall.owned = true;
+                
+                // If this is the first ball, select it by default
+                const selectedBall = localStorage.getItem(`selected_ball_${walletAddress}`);
+                if (!selectedBall) {
+                    localStorage.setItem(`selected_ball_${walletAddress}`, 'ordinary');
+                }
+                
+                return true;
+            }
+
+            function renderNFTMarket() {
+                // Function to get the selected ball
+                function getSelectedBall() {
+                    if (!window.solana || !window.solana.publicKey) {
+                        // If wallet is not connected, use the default ball
+                        return 'ordinary';
+                    }
+                    
+                    const walletAddress = window.solana.publicKey.toString();
+                    const selectedBall = localStorage.getItem(`selected_ball_${walletAddress}`);
+                    
+                    // If no ball is selected or the selected ball doesn't exist, default to ordinary
+                    if (!selectedBall || !NFT_MARKET_ITEMS.some(item => item.rarity === selectedBall)) {
+                        return 'ordinary';
+                    }
+                    
+                    return selectedBall;
+                }
+                
+                const grid = document.getElementById('nftShopGrid');
+                if (!grid) return;
+                
+                const walletAddress = window.solana?.publicKey?.toString();
+                const selectedBall = walletAddress ? getSelectedBall() : null;
+                
+                // Update owned status for all items
+                NFT_MARKET_ITEMS.forEach(item => {
+                    item.owned = walletAddress && localStorage.getItem(`owns_${walletAddress}_${item.rarity}`) === 'true';
+                });
+                
+                grid.innerHTML = '';
+                NFT_MARKET_ITEMS.forEach(item => {
+                    const isOwned = walletAddress && localStorage.getItem(`owns_${walletAddress}_${item.rarity}`) === 'true';
+                    const isSelected = item.rarity === selectedBall;
+                    const isSoldOut = item.totalSupply >= item.maxSupply;
+                    
+                    const card = document.createElement('div');
+                    card.className = 'nft-ball-card';
+                    card.innerHTML = `
+                        <div style="width:90px;height:90px;border-radius:50%;background:${item.color};margin:0 auto 12px auto;box-shadow:0 0 16px ${item.color};border:4px solid ${isSelected ? '#00FF00' : '#fff'};"></div>
+                        <div style="font-weight:bold;font-size:1.2em;margin-bottom:4px;">${item.name} ${isSelected ? '✅' : ''}</div>
+                        <div style="color:#FFD700;margin-bottom:4px;">${item.price === 'FREE' ? 'FREE' : `${item.price} SOL`}</div>
+                        <div style="color:#aaa;margin-bottom:8px;">${item.rarity.charAt(0).toUpperCase()+item.rarity.slice(1)}</div>
+                        <div style="font-size:0.95em;margin-bottom:10px;">${item.description}</div>
+                        <div style="font-size:0.95em;margin-bottom:10px;color:#0ff;">Multiplier: x${item.multiplier}</div>
+                        <div style="font-size:0.95em;margin-bottom:10px;color:${isSoldOut ? '#ff0000' : '#00ff00'};">
+                            ${isSoldOut ? 'SOLD OUT' : `${item.maxSupply - item.totalSupply} available (${item.maxSupply} total)`}
+                        </div>
+                        ${isOwned 
+                            ? `<div style="margin: 10px 0;">
+                                <div style="color:#00FF00; margin: 5px 0;">✅ Owned</div>
+                                ${isSelected 
+                                    ? '<div style="color:#00FF00;">⭐ Selected</div>'
+                                    : `<button class="wallet-button select-nft-btn" 
+                                             style="width:100%; margin-top:5px;"
+                                             data-rarity="${item.rarity}"
+                                             onclick="selectNFT(this)">
+                                          Select
+                                      </button>`
+                                }
+                               </div>`
+                            : `<button class="wallet-button buy-nft-btn" 
+                                     data-rarity="${item.rarity}" 
+                                     data-price="${item.price}"
+                                     onclick="${isSoldOut ? '' : 'buyAndMintNFT(this)'}"
+                                     ${isSoldOut ? 'disabled style="background:#ff0000;"' : ''}>
+                                  Buy & Mint
+                              </button>`
+                        }
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+
+            // Function to mint NFT
+            async function mintNFT(item) {
+                const walletAddress = window.solana?.publicKey?.toString();
+                if (!walletAddress) {
+                    alert('Please connect your wallet first!');
+                    return;
+                }
+
+                // Check if user already owns this NFT
+                if (localStorage.getItem(`owns_${walletAddress}_${item.rarity}`) === 'true') {
+                    alert('You already own this NFT!');
+                    return;
+                }
+
+
+                try {
+                    // First, check if we can connect to the backend
+                    const testResponse = await fetch('http://localhost:3000/health', {
+                        method: 'GET',
+                        mode: 'cors',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    if (!testResponse.ok) {
+                        throw new Error('Cannot connect to backend server');
+                    }
+
+                    // Now try to mint the NFT
+                    const response = await fetch('http://localhost:3000/api/mint', {
+                        method: 'POST',
+                        mode: 'cors',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin': 'http://127.0.0.1:5502'
+                        },
+                        body: JSON.stringify({
+                            walletAddress: walletAddress,
+                            metadataUri: item.metadataUri,
+                            price: item.price
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Server returned error: ' + response.statusText);
+                    }
+
+                    const data = await response.json();
+                    if (data.success) {
+                        // Mark as owned and update UI
+                        item.owned = true;
+                        item.totalSupply++;
+                        localStorage.setItem(`owns_${walletAddress}_${item.rarity}`, 'true');
+                        
+                        // If this is the first NFT owned, select it by default
+                        const selectedBall = localStorage.getItem(`selected_ball_${walletAddress}`);
+                        if (!selectedBall) {
+                            localStorage.setItem(`selected_ball_${walletAddress}`, item.rarity);
+                        }
+                        
+                        // Refresh the market display
+                        renderNFTMarket();
+                        alert('NFT minted successfully!');
+                    } else {
+                        throw new Error(data.error || 'Minting failed');
+                    }
+                } catch (error) {
+                    console.error('Minting error:', error);
+                    alert('Error minting NFT: ' + error.message);
+                }
+            }
+
+            // Function to handle NFT purchase with Phantom Wallet
+            async function buyAndMintNFT(button) {
+                try {
+                    console.log('=== Starting NFT Purchase with Phantom ===');
+                    
+                    // 1. Check if Phantom is installed
+                    if (typeof window.phantom?.solana?.isPhantom === 'undefined') {
+                        const installUrl = 'https://phantom.app/';
+                        const shouldInstall = confirm('Phantom Wallet is not installed. Would you like to install it now?');
+                        if (shouldInstall) window.open(installUrl, '_blank');
+                        return;
+                    }
+
+                    // 2. Connect to Phantom if not already connected
+                    const provider = window.phantom?.solana;
+                    if (!provider.isConnected) {
+                        await provider.connect();
+                    }
+                    
+                    // 3. Get wallet address
+                    const publicKey = provider.publicKey.toString();
+                    console.log('Connected wallet:', publicKey);
+                    
+                    // Function to get the selected ball's multiplier
+                    function getBallMultiplier(rarity) {
+                        if (!rarity) {
+                            // If no rarity provided, use the selected ball
+                            const selectedBall = getSelectedBall();
+                            const item = NFT_MARKET_ITEMS.find(i => i.rarity === selectedBall) || 
+                                         NFT_MARKET_ITEMS.find(i => i.rarity === 'ordinary');
+                            return item?.multiplier || 1.0;
+                        }
+                        
+                        const item = NFT_MARKET_ITEMS.find(i => i.rarity === rarity);
+                        if (!item) return 1.0;
+                        
+                        // Return the multiplier from the item, default to 1.0 if not set
+                        return item.multiplier || 1.0;
+                    }
+                    
+                    // 4. Get the selected item
+                    const rarity = button.getAttribute('data-rarity');
+                    const item = NFT_MARKET_ITEMS.find(i => i.rarity === rarity);
+                    if (!item) {
+                        throw new Error('Selected NFT item not found');
+                    }
+                    
+                    // 5. Check ownership
+                    const ownershipKey = `owns_${publicKey}_${rarity}`;
+                    if (localStorage.getItem(ownershipKey) === 'true') {
+                        alert('You already own this NFT!');
+                        return;
+                    }
+                    
+                    // 6. Check if item is available
+                    if (item.available <= 0) {
+                        alert('This NFT is sold out!');
+                        return;
+                    }
+                    
+                    // 7. Confirm purchase
+                    if (!confirm(`Purchase ${item.name} for ${item.price} SOL?`)) {
+                        return;
+                    }
+                    
+                    // 8. Connect to Solana devnet for testing with a custom RPC endpoint
+                    const connection = new solanaWeb3.Connection(
+                        'https://api.devnet.solana.com',
+                        'confirmed'
+                    );
+                    console.log('Connected to Solana devnet');
+                    
+                    // 9. Get recent blockhash for the transaction
+                    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+                    
+                    // 10. Create transaction to transfer SOL
+                    const transaction = new solanaWeb3.Transaction({
+                        feePayer: new solanaWeb3.PublicKey(publicKey),
+                        blockhash,
+                        lastValidBlockHeight
+                    }).add(
+                        solanaWeb3.SystemProgram.transfer({
+                            fromPubkey: new solanaWeb3.PublicKey(publicKey),
+                            toPubkey: new solanaWeb3.PublicKey('4GP4w3DzugTWHMGJCQ3U8DqWjVQHgXajS9Px83jeUppG'),
+                            lamports: Math.floor(item.price * solanaWeb3.LAMPORTS_PER_SOL)
+                        })
+                    );
+                    
+                    // Transaction already has blockhash from creation
+                    
+                    // 11. Sign and send transaction
+                    console.log('Sending transaction...');
+                    const { signature } = await provider.signAndSendTransaction(transaction);
+                    console.log('Transaction sent:', signature);
+                    
+                    // 12. Confirm transaction
+                    await connection.confirmTransaction(signature, 'confirmed');
+                    console.log('Transaction confirmed');
+                    
+                    // 13. Mark as owned and update UI
+                    item.available--;
+                    localStorage.setItem(ownershipKey, 'true');
+                    
+                    // 14. Select this NFT by default if none selected
+                    const selectedBall = localStorage.getItem(`selected_ball_${publicKey}`);
+                    if (!selectedBall) {
+                        localStorage.setItem(`selected_ball_${publicKey}`, item.rarity);
+                    }
+                    
+                    // 15. Update UI
+                    renderNFTMarket();
+                    
+                    // 16. Show success message
+                    alert(`Successfully purchased ${item.name}!`);
+                    
+                } catch (error) {
+                    console.error('Purchase failed:', error);
+                    let message = 'Purchase failed: ' + (error.message || 'Unknown error');
+                    
+                    if (error.message?.includes('User rejected')) message = 'Transaction was rejected';
+                    else if (error.message?.includes('insufficient')) message = 'Insufficient SOL balance';
+                    else if (error.message?.includes('blockhash')) message = 'Network error. Please try again';
+                    
+                    alert(message);
+                }
+            }
+
+            // Function to handle NFT selection
+            function selectNFT(button) {
+                const rarity = button.getAttribute('data-rarity');
+                const walletAddress = window.solana?.publicKey?.toString();
+                
+                if (!walletAddress) {
+                    alert('Please connect your wallet first!');
+                    return;
+                }
+                
+                // Find the ball item
+                const ballItem = NFT_MARKET_ITEMS.find(item => item.rarity === rarity);
+                if (!ballItem) {
+                    console.error('Ball item not found:', rarity);
+                    return;
+                }
+                
+                // Update selected ball in storage
+                localStorage.setItem(`selected_ball_${walletAddress}`, rarity);
+                
+                // Update all buttons
+                const buttons = document.querySelectorAll('.select-nft-btn, .buy-nft-btn');
+                buttons.forEach(btn => {
+                    const btnRarity = btn.getAttribute('data-rarity');
+                    if (btnRarity === rarity) {
+                        btn.textContent = 'Selected';
+                        btn.style.backgroundColor = '#00FF00';
+                        btn.disabled = true;
+                    } else if (btn.classList.contains('select-nft-btn')) {
+                        btn.textContent = 'Select';
+                        btn.style.backgroundColor = '';
+                        btn.disabled = false;
+                    }
+                });
+                
+                // Update the ball properties if game is running
+                if (ball) {
+                    ball.color = ballItem.color;
+                    ball.rarity = ballItem.rarity;
+                    // Recalculate ball speed based on the new multiplier
+                    const baseSpeed = 2.85 + (level-1)*0.18;
+                    const speedMultiplier = ballItem.multiplier || 1.0;
+                    const speed = baseSpeed * speedMultiplier;
+                    ball.dx = (ball.dx > 0 ? 1 : -1) * speed;
+                    ball.dy = (ball.dy > 0 ? 1 : -1) * speed;
+                }
+                
+                alert(`Selected ${ballItem.name} ball!`);
+            }
+        }
+        
+        let breakSound = document.getElementById('breakSound');
+        let hitSound = document.getElementById('hitSound');
+        let gameOverSound = document.getElementById('gameOverSound');
+
+        // --- Single Player Game Logic (from game.html) ---
+        function startSinglePlayerGame() {
+            score = 0;
+            level = 1;
+            gameOver = false;
+            powerupActive = false;
+            powerup = null;
+            powerupReady = false;
+            if (window.singlePlayerGameLoop) cancelAnimationFrame(window.singlePlayerGameLoop);
+            let canvas = document.getElementById('gameCanvas');
+            let ctx = canvas.getContext('2d');
+            canvas.width = 800;
+            canvas.height = 600;
+            let selectedBall = getSelectedBall();
+            // Medium, enjoyable base speed
+            let baseSpeed = 2.85 + (level-1)*0.18;
+            ball = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                radius: 10,
+                dx: baseSpeed * (Math.random() > 0.5 ? 1 : -1),
+                dy: -baseSpeed,
+                color: selectedBall.color,
+                rarity: selectedBall.rarity,
+                momentumTimer: 0,
+                lastBlockHit: 0
+            };
+            paddle = {
+                width: 120,
+                height: 20,
+                x: (canvas.width - 120) / 2,
+                color: '#33FF57',
+            };
+            bricks = [];
+            nextBrickIndex = 0;
+            singlePlayerPaused = false;
+            gradualBrickInterval = null;
+            // Get multiplier from selected ball
+            const item = NFT_MARKET_ITEMS.find(i => i.rarity === selectedBall.rarity);
+            if (item) {
+                multiplier = item.multiplier;
+                document.getElementById('multiplier').innerText = multiplier.toFixed(1) + 'x';
+            }
+            startSmartBrickCreation();
+            document.getElementById('powerupCount').innerText = 'Powerpoint ' + Math.max(0, powerupCount);
+            // Ensure powerup spawns at level 1
+            maybeSpawnPowerup(1, canvas);
+            // Start the game loop and expose globally for canceling
+            window.singlePlayerGameLoop = requestAnimationFrame(drawSingle);
+        }
+        // SMART, CONTINUOUS BRICK CREATION
+        let gradualBrickInterval = null;
+        function startSmartBrickCreation() {
+            let canvas = document.getElementById('gameCanvas');
+            let maxBricksOnScreen = 5 + Math.floor(level/2); // gradually increases
+            if (gradualBrickInterval) clearInterval(gradualBrickInterval);
+            gradualBrickInterval = setInterval(() => {
+                let activeBricks = bricks.filter(b => b.status === 1).length;
+                if (activeBricks < maxBricksOnScreen && !gameOver && !singlePlayerPaused) {
+                    let tries = 0, placed = false;
+                    while (!placed && tries < 10) {
+                        let newX = Math.random() * (canvas.width - brickWidth);
+                        let newY = Math.random() * (canvas.height / 2);
+                        let overlap = bricks.some(b => b.status === 1 && Math.abs(b.x - newX) < brickWidth && Math.abs(b.y - newY) < brickHeight);
+                        if (!overlap) {
+                            bricks.push({
+                                x: newX,
+                                y: newY,
+                                status: 1,
+                                color: '#FFD700',
+                            });
+                            placed = true;
+                        }
+                        tries++;
+                    }
+                }
+            }, 1100 - Math.min(level*50, 700)); // faster at higher levels, but never too fast
+        }
+        function drawSingle() {
+            let canvas = document.getElementById('gameCanvas');
+            let ctx = canvas.getContext('2d');
+            if (singlePlayerPaused || gameOver) {
+                window.singlePlayerGameLoop = null;
+                if (gameOver && document.getElementById('startGamePlay')) document.getElementById('startGamePlay').style.display = 'inline-block';
+                return;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBricksSingle(ctx);
+            drawBallSingle(ctx);
+            drawPaddleSingle(ctx);
+            drawPowerup(ctx);
+            // Ball movement
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+            // Powerup movement
+            if (powerupActive && powerup) {
+                powerup.y += powerup.speed;
+                if (powerup.y > canvas.height) {
+                    powerupActive = false;
+                    powerup = null;
+                }
+            }
+            // Always check for powerup spawn at level 1 if not active
+            if (level === 1 && !powerupActive && !powerupReady) {
+                maybeSpawnPowerup(1, canvas);
+            }
+            checkPowerupCollision();
+            // Wall collisions
+            if (ball.x + ball.dx > canvas.width - ball.radius || ball.x + ball.dx < ball.radius) {
+                ball.dx = -ball.dx;
+                hitSound.play();
+            }
+            if (ball.y + ball.dy < ball.radius) {
+                ball.dy = -ball.dy;
+                hitSound.play();
+            }
+            // Paddle collision with angle adjustment (allow edge hits)
+            if (ball.y + ball.radius >= canvas.height - paddle.height && ball.y + ball.radius <= canvas.height && ball.x + ball.radius >= paddle.x && ball.x - ball.radius <= paddle.x + paddle.width && ball.dy > 0) {
+                let hitPoint = ((ball.x - paddle.x) / paddle.width) * 2 - 1;
+                let maxBounceAngle = Math.PI / 3;
+                let bounceAngle = hitPoint * maxBounceAngle;
+                let speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+                ball.dx = speed * Math.sin(bounceAngle);
+                ball.dy = -Math.abs(speed * Math.cos(bounceAngle));
+                score += 1 * (multiplier || 1);
+            } else if (ball.y + ball.radius > canvas.height) {
+                gameOver = true;
+                if (gradualBrickInterval) clearInterval(gradualBrickInterval);
+                gameOverSound.play();
+                promptAndSaveScore(score, 'single');
+                document.getElementById('gameOverMsg').innerText = 'Game Over! Your Score: ' + score;
+                document.getElementById('gameOverMsg').style.display = 'block';
+                window.singlePlayerGameLoop = null;
+                return;
+            }
+            // Brick collision (with improved physics)
+            let hitBlock = false;
+            for (let i = 0; i < bricks.length; i++) {
+                let b = bricks[i];
+                if (b.status === 1 && ball.x + ball.radius > b.x && ball.x - ball.radius < b.x + brickWidth && ball.y + ball.radius > b.y && ball.y - ball.radius < b.y + brickHeight) {
+                    // Determine collision side for realistic bounce
+                    let overlapLeft = Math.abs((ball.x + ball.radius) - b.x);
+                    let overlapRight = Math.abs((ball.x - ball.radius) - (b.x + brickWidth));
+                    let overlapTop = Math.abs((ball.y + ball.radius) - b.y);
+                    let overlapBottom = Math.abs((ball.y - ball.radius) - (b.y + brickHeight));
+                    let minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+                    if (minOverlap === overlapLeft || minOverlap === overlapRight) {
+                        ball.dx = -ball.dx;
+                    } else {
+                        ball.dy = -ball.dy;
+                    }
+                    b.status = 0;
+                    score += 1 * (multiplier || 1);
+                    breakSound.play();
+                    hitBlock = true;
+                    break;
+                }
+            }
+            ball.momentumTimer = 0;
+            let brokenBricks = bricks.filter(b => b.status === 0).length;
+            if (brokenBricks >= 10 * level && !gameOver) {
+                level++;
+                let maxSpeed = 5.2;
+                let speed = Math.min(2.85 + (level-1)*0.24, maxSpeed);
+                let angle = Math.atan2(ball.dy, ball.dx);
+                ball.dx = speed * Math.cos(angle);
+                ball.dy = speed * Math.sin(angle);
+                totalPointsToNextLevel += 10;
+                document.getElementById('levelDisplay').innerText = 'Level: ' + level;
+                maybeSpawnPowerup(level, canvas);
+            }
+            if (powerupFadeActive && powerupFadeBlocks.length > 0) {
+                for (let b of powerupFadeBlocks) {
+                    b.status = 0;
+                }
+                powerupFadeFrame++;
+                if (powerupFadeFrame > powerupFadeFrames) {
+                    powerupFadeActive = false;
+                    powerupFadeBlocks = [];
+                }
+            }
+            document.getElementById('score').innerText = Number(score).toFixed(4).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+            document.getElementById('levelDisplay').innerText = 'Level: ' + level;
+            document.getElementById('multiplier').innerText = (multiplier || 1).toFixed(2) + 'x';
+            document.getElementById('powerupCount').innerText = 'Powerpoint ' + Math.max(0, powerupCount);
+            if (!gameOver) {
+                window.singlePlayerGameLoop = requestAnimationFrame(drawSingle);
+            }
+        }
+        function drawBricksSingle(ctx) {
+            for (let i = 0; i < bricks.length; i++) {
+                let b = bricks[i];
+                if (b.status === 1) {
+                    ctx.beginPath();
+                    ctx.rect(b.x, b.y, brickWidth, brickHeight);
+                    ctx.fillStyle = b.color;
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+        }
+        function drawBallSingle(ctx) {
+            const selectedBall = getSelectedBall();
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
+            ctx.fillStyle = selectedBall.color;
+            ctx.fill();
+            ctx.closePath();
+        }
+        function drawPaddleSingle(ctx) {
+            let canvas = document.getElementById('gameCanvas');
+            ctx.beginPath();
+            ctx.rect(paddle.x, canvas.height - paddle.height, paddle.width, paddle.height);
+            ctx.fillStyle = paddle.color;
+            ctx.fill();
+            ctx.closePath();
+        }
+        function drawPowerup(ctx) {
+            if (powerupActive && powerup) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(powerup.x + powerup.width / 2, powerup.y + powerup.height / 2, powerup.width / 2, 0, Math.PI * 2);
+                ctx.fillStyle = powerup.color;
+                ctx.shadowColor = '#fff';
+                ctx.shadowBlur = 8;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = '#222';
+                ctx.font = 'bold 22px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('P', powerup.x + powerup.width / 2, powerup.y + powerup.height / 2);
+                ctx.restore();
+            }
+        }
+        function checkPowerupCollision() {
+            if (powerupActive && powerup) {
+                // Ensure canvas is defined
+                let canvas = document.getElementById('gameCanvas');
+                // Ball collision (existing)
+                let cx = powerup.x + powerup.width / 2;
+                let cy = powerup.y + powerup.height / 2;
+                let dist = Math.sqrt((ball.x - cx) ** 2 + (ball.y - cy) ** 2);
+                if (dist < ball.radius + powerup.width / 2) {
+                    powerupActive = false;
+                    powerup = null;
+                    powerupCount++;
+                    powerupReady = true;
+                    document.getElementById('powerupCount').innerText = 'Powerpoint ' + Math.max(0, powerupCount);
+                    savePowerupCount();
+                    return;
+                }
+                // Paddle collision (NEW)
+                let paddleTop = canvas.height - paddle.height;
+                let paddleLeft = paddle.x;
+                let paddleRight = paddle.x + paddle.width;
+                let powerupBottom = powerup.y + powerup.height;
+                let powerupLeft = powerup.x;
+                let powerupRight = powerup.x + powerup.width;
+                // Check if the bottom of the powerup touches the top of the paddle and horizontally overlaps
+                if (
+                    powerupBottom >= paddleTop &&
+                    powerup.y <= paddleTop + paddle.height &&
+                    (
+                        (powerupLeft >= paddleLeft && powerupLeft <= paddleRight) ||
+                        (powerupRight >= paddleLeft && powerupRight <= paddleRight) ||
+                        (paddleLeft >= powerupLeft && paddleLeft <= powerupRight)
+                    )
+                ) {
+                    powerupActive = false;
+                    powerup = null;
+                    powerupCount++;
+                    powerupReady = true;
+                    document.getElementById('powerupCount').innerText = 'Powerpoint ' + Math.max(0, powerupCount);
+                    savePowerupCount();
+                }
+            }
+        }
+        document.addEventListener('keydown', function(e) {
+            if ((e.key === ' ' || e.key === 'Spacebar') && powerupReady && !gameOver && !singlePlayerPaused) {
+                usePowerup();
+            }
+        });
+        document.addEventListener('mousemove', function(event) {
+            let canvas = document.getElementById('gameCanvas');
+            if (!canvas) return;
+            let mouseX = event.clientX - canvas.getBoundingClientRect().left;
+            if (paddle) paddle.x = Math.max(0, Math.min(mouseX - paddle.width / 2, canvas.width - paddle.width));
+        });
+        document.addEventListener('touchmove', function(event) {
+            let canvas = document.getElementById('gameCanvas');
+            if (!canvas || !event.touches.length) return;
+            let touchX = event.touches[0].clientX - canvas.getBoundingClientRect().left;
+            if (paddle) paddle.x = Math.max(0, Math.min(touchX - paddle.width / 2, canvas.width - paddle.width));
+        }, { passive: false });
+        document.addEventListener('keydown', function(e) {
+            if ((e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') && paddle) {
+                paddle.x = Math.max(0, paddle.x - 30);
+            }
+            if ((e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') && paddle) {
+                paddle.x = Math.min(canvas.width - paddle.width, paddle.x + 30);
+            }
+        });
+
+        // --- Multiplayer Game Logic (from game.html) ---
+        function startMultiplayerGame() {
+            if (multiPlayerGameLoop) cancelAnimationFrame(multiPlayerGameLoop);
+            let canvas = document.getElementById('mpCanvas');
+            let ctx = canvas.getContext('2d');
+            canvas.width = 1000;
+            canvas.height = 700;
+            let opponent = document.getElementById('mpOpponentSelect').value;
+            let difficulty = document.getElementById('mpDifficulty').value;
+            let score1 = 0, score2 = 0, level = 1;
+            mpGameOver = false;
+            // EASIER CPU DIFFICULTY & SLOWER HARD MODE
+            let baseSpeed, cpuSpeedBase, obstacleInterval;
+            if (difficulty === 'hard') {
+                baseSpeed = 5; cpuSpeedBase = 16; obstacleInterval = 160;
+            } else if (difficulty === 'medium') {
+                baseSpeed = 3.2; cpuSpeedBase = 7; obstacleInterval = 240;
+            } else { // easy
+                baseSpeed = 2.5; cpuSpeedBase = 2.7; obstacleInterval = 400;
+            }
+            let speed = baseSpeed;
+            let ball = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                radius: 12,
+                dx: speed * (Math.random() > 0.5 ? 1 : -1),
+                dy: -speed,
+                color: '#FFD700',
+            };
+            let paddle1 = { width: 160, height: 20, x: (canvas.width - 160) / 2, color: '#33FF57' };
+            let paddle2 = { width: 160, height: 20, x: (canvas.width - 160) / 2, color: '#3357FF' };
+            let obstacles = [];
+            let obstacleWidth = 80, obstacleHeight = 18;
+            let obstacleTimer = 0;
+            function createObstacles() {
+                let x = Math.random() * (canvas.width - obstacleWidth);
+                let y = Math.random() * (canvas.height * 0.4) + canvas.height * 0.3;
+                obstacles.push({ x, y, w: obstacleWidth, h: obstacleHeight, color: '#8E44AD' });
+            }
+            createObstacles();
+            function drawPaddle(p, y) {
+                ctx.beginPath();
+                ctx.rect(p.x, y, p.width, p.height);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+            function drawBall() {
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fillStyle = ball.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+            function drawObstacles() {
+                for (let o of obstacles) {
+                    ctx.beginPath();
+                    ctx.rect(o.x, o.y, o.w, o.h);
+                    ctx.fillStyle = o.color;
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+            function obstacleCollision() {
+                for (let i = obstacles.length - 1; i >= 0; i--) {
+                    let o = obstacles[i];
+                    if (ball.x + ball.radius > o.x && ball.x - ball.radius < o.x + o.w && ball.y + ball.radius > o.y && ball.y - ball.radius < o.y + o.h) {
+                        ball.dy = -ball.dy;
+                        hitSound.play();
+                        obstacles.splice(i, 1);
+                    }
+                }
+            }
+            function cpuMove() {
+                let target = ball.x - paddle2.width / 2;
+                let cpuSpeed = cpuSpeedBase;
+                if (Math.abs(paddle2.x - target) < cpuSpeed) {
+                    paddle2.x = target;
+                } else if (paddle2.x < target) {
+                    paddle2.x += cpuSpeed;
+                } else if (paddle2.x > target) {
+                    paddle2.x -= cpuSpeed;
+                }
+                paddle2.x = Math.max(0, Math.min(canvas.width - paddle2.width, paddle2.x));
+            }
+            function checkLevelUp() {
+                let combinedScore = score1 + score2;
+                let nextLevelScore = level * 50;
+                if (combinedScore >= nextLevelScore) {
+                    level++;
+                    speed += 0.5;
+                    ball.dx = ball.dx > 0 ? speed : -speed;
+                    ball.dy = ball.dy > 0 ? speed : -speed;
+                    for (let i = 0; i < 2; i++) createObstacles();
+                    document.getElementById('mpLevelDisplay').innerText = 'Level: ' + level;
+                }
+            }
+            function getBounce(ballX, paddleX, paddleWidth, ballSpeed) {
+                let hitPoint = ((ballX - paddleX) / paddleWidth) * 2 - 1;
+                let maxBounceAngle = Math.PI / 3;
+                let bounceAngle = hitPoint * maxBounceAngle;
+                return {
+                    dx: ballSpeed * Math.sin(bounceAngle),
+                    dy: -Math.abs(ballSpeed * Math.cos(bounceAngle))
+                };
+            }
+            function draw() {
+                if (mpGameOver) {
+                    if (document.getElementById('startMultiGamePlay')) document.getElementById('startMultiGamePlay').style.display = 'inline-block';
+                    return;
+                }
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawPaddle(paddle1, canvas.height - paddle1.height);
+                drawPaddle(paddle2, 0);
+                drawObstacles();
+                drawBall();
+                ball.x += ball.dx;
+                ball.y += ball.dy;
+                if (ball.x + ball.dx > canvas.width - ball.radius || ball.x + ball.dx < ball.radius) {
+                    ball.dx = -ball.dx;
+                    hitSound.play();
+                }
+                obstacleCollision();
+                // Paddle 1 collision (bottom, allow edge hits)
+                if (ball.y + ball.radius >= canvas.height - paddle1.height && ball.y + ball.radius <= canvas.height && ball.x + ball.radius >= paddle1.x && ball.x - ball.radius <= paddle1.x + paddle1.width && ball.dy > 0) {
+                    let ballSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+                    let bounce = getBounce(ball.x, paddle1.x, paddle1.width, ballSpeed);
+                    ball.dx = bounce.dx;
+                    ball.dy = bounce.dy;
+                    score1 += 5;
+                }
+                // Paddle 2 collision (top, allow edge hits)
+                if (ball.y - ball.radius <= paddle2.height && ball.y - ball.radius >= 0 && ball.x + ball.radius >= paddle2.x && ball.x - ball.radius <= paddle2.x + paddle2.width && ball.dy < 0) {
+                    let ballSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+                    let hitPoint = ((ball.x - paddle2.x) / paddle2.width) * 2 - 1;
+                    let maxBounceAngle = Math.PI / 3;
+                    let bounceAngle = hitPoint * maxBounceAngle;
+                    ball.dx = ballSpeed * Math.sin(bounceAngle);
+                    ball.dy = Math.abs(ballSpeed * Math.cos(bounceAngle));
+                    score2 += 5;
+                }
+                if (ball.y + ball.radius > canvas.height) {
+                    mpGameOver = true;
+                    gameOverSound.play();
+                    promptAndSaveScore(score2, 'multi');
+                    document.getElementById('mpGameOverMsg').innerText = 'You Lost!';
+                    document.getElementById('mpGameOverMsg').style.display = 'block';
+                    return;
+                }
+                if (ball.y - ball.radius < 0) {
+                    mpGameOver = true;
+                    gameOverSound.play();
+                    promptAndSaveScore(score1, 'multi');
+                    document.getElementById('mpGameOverMsg').innerText = 'Player 1 Wins!';
+                    document.getElementById('mpGameOverMsg').style.display = 'block';
+                    return;
+                }
+                document.getElementById('mpScore1').innerText = Number(score1).toFixed(4).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+                document.getElementById('mpScore2').innerText = Number(score2).toFixed(4).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+                document.getElementById('mpLevelDisplay').innerText = 'Level: ' + level;
+                if (opponent === 'cpu') cpuMove();
+                checkLevelUp();
+                obstacleTimer++;
+                if (obstacleTimer > obstacleInterval) {
+                    createObstacles();
+                    obstacleTimer = 0;
+                }
+                multiPlayerGameLoop = requestAnimationFrame(draw);
+            }
+            document.onkeydown = function(e) {
+                if (e.key === 'ArrowLeft') paddle1.x = Math.max(0, Math.min(paddle1.x - 30, canvas.width - paddle1.width));
+                if (e.key === 'ArrowRight') paddle1.x = Math.max(0, Math.min(paddle1.x + 30, canvas.width - paddle1.width));
+                if (opponent === 'player') {
+                    if (e.key === 'a' || e.key === 'A') paddle2.x = Math.max(0, Math.min(paddle2.x - 30, canvas.width - paddle2.width));
+                    if (e.key === 'd' || e.key === 'D') paddle2.x = Math.max(0, Math.min(paddle2.x + 30, canvas.width - paddle2.width));
+                }
+            };
+            canvas.addEventListener('mousemove', function(e) {
+                let rect = canvas.getBoundingClientRect();
+                let x = (e.clientX - rect.left) - paddle1.width / 2;
+                paddle1.x = Math.max(0, Math.min(x, canvas.width - paddle1.width));
+            });
+            canvas.addEventListener('touchmove', function(e) {
+                if (e.touches.length > 0) {
+                    let rect = canvas.getBoundingClientRect();
+                    let x = (e.touches[0].clientX - rect.left) - paddle1.width / 2;
+                    paddle1.x = Math.max(0, Math.min(x, canvas.width - paddle1.width));
+                }
+            }, { passive: false });
+            document.getElementById('mpGameOverMsg').style.display = 'none';
+            multiPlayerGameLoop = null;
+            draw();
+        }
+
+        // --- Leaderboard Logic (from game.html) ---
+        function promptAndSaveScore(score, mode) {
+            let name = window.solana && window.solana.publicKey ? window.solana.publicKey.toString() : 'guest';
+            saveScoreToLeaderboard(mode, score, false); // Personal
+            saveScoreToLeaderboard(mode, score, true);  // Global
+        }
+        function saveScoreToLeaderboard(mode, score, isGlobal = false) {
+            let wallet = window.solana && window.solana.publicKey ? window.solana.publicKey.toString() : 'guest';
+            let key = isGlobal ? 'bbb_global_' + mode : 'bbb_' + wallet + '_' + mode;
+            let board = JSON.parse(localStorage.getItem(key) || '[]');
+            if (board.length < 10) {
+                board.push({ score, date: new Date().toLocaleString(), wallet });
+            } else {
+                let minIdx = 0;
+                for (let i = 1; i < board.length; i++) {
+                    if (board[i].score < board[minIdx].score) minIdx = i;
+                }
+                if (score > board[minIdx].score) {
+                    board[minIdx] = { score, date: new Date().toLocaleString(), wallet };
+                }
+            }
+            board = board.sort((a, b) => b.score - a.score);
+            localStorage.setItem(key, JSON.stringify(board));
+        }
+        // Helper: updateCurrentUserAddress and renderLeaderboards
+        function updateCurrentUserAddress() {
+            const el = document.getElementById('currentUserAddress');
+            if (el && window.solana && window.solana.publicKey) {
+                el.innerText = window.solana.publicKey.toString();
+            } else if (el) {
+                el.innerText = 'Not Connected';
+            }
+        }
+        function renderLeaderboards() {
+            let global = JSON.parse(localStorage.getItem('bbb_global_single') || '[]');
+            let wallet = window.solana && window.solana.publicKey ? window.solana.publicKey.toString() : 'guest';
+            let html = '<table style="width:100%;color:#FFD700;font-size:1.1em;"><tr><th>Rank</th><th>Wallet</th><th>Score</th><th>Date</th></tr>';
+            for (let i = 0; i < global.length; i++) {
+                const isUser = global[i].wallet === wallet;
+                html += `<tr><td>${i+1}</td><td${isUser ? ' class=\"highlight-wallet\"' : ''}>${global[i].wallet.slice(0,4)}...${global[i].wallet.slice(-4)}</td><td>${Number(global[i].score).toFixed(4).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1')}</td><td>${global[i].date}</td></tr>`;
+            }
+            html += '</table>';
+            document.getElementById('globalLeaderboardTable').innerHTML = html;
+            let single = JSON.parse(localStorage.getItem('bbb_' + wallet + '_single') || '[]');
+            let multi = JSON.parse(localStorage.getItem('bbb_' + wallet + '_multi') || '[]');
+            let htmlSingle = '<ol>';
+            for (let i = 0; i < single.length; i++) {
+                htmlSingle += `<li>${Number(single[i].score).toFixed(4).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1')} (${single[i].date})</li>`;
+            }
+            htmlSingle += '</ol>';
+            let htmlMulti = '<ol>';
+            for (let i = 0; i < multi.length; i++) {
+                htmlMulti += `<li>${Number(multi[i].score).toFixed(4).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1')} (${multi[i].date})</li>`;
+            }
+            htmlMulti += '</ol>';
+            document.getElementById('userSingleLeaderboard').innerHTML = htmlSingle;
+            document.getElementById('userMultiLeaderboard').innerHTML = htmlMulti;
+        }
+    </script>
+    <script>
+        // --- Event Listeners for Navigation and Game Start ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // Section navigation
+            document.getElementById('startGameFlow').onclick = function() {
+                showSection('modeSelectSection');
+            };
+            document.getElementById('singlePlayerBtn').onclick = function() {
+                showSection('gameSection');
+                startSinglePlayerGame();
+            };
+            document.getElementById('multiPlayerBtn').onclick = function() {
+                showSection('multiSection');
+                startMultiplayerGame();
+            };
+            document.getElementById('backToMenuFromMode').onclick = function() {
+                showSection('mainMenuSection');
+            };
+            document.getElementById('backBtn').onclick = function() {
+                showSection('modeSelectSection');
+            };
+            document.getElementById('mpBackBtn').onclick = function() {
+                showSection('modeSelectSection');
+            };
+            document.getElementById('leaderboardBtn').onclick = function() {
+                showSection('leaderboardSection');
+                updateCurrentUserAddress();
+                renderLeaderboards();
+            };
+            document.getElementById('backToMenuFromLeaderboard').onclick = function() {
+                showSection('mainMenuSection');
+            };
+            document.getElementById('openNFTMarket').onclick = function() {
+                showSection('nftMarketSection');
+                renderNFTMarket();
+            };
+            document.getElementById('backToMenuFromNFTMarket').onclick = function() {
+                showSection('mainMenuSection');
+            };
+            // Single player game start
+            document.getElementById('startGamePlay').onclick = function() {
+                this.style.display = 'none';
+                document.getElementById('gameOverMsg').style.display = 'none';
+                startSinglePlayerGame();
+            };
+            // Multiplayer game start
+            document.getElementById('startMultiGamePlay').onclick = function() {
+                this.style.display = 'none';
+                document.getElementById('mpGameOverMsg').style.display = 'none';
+                startMultiplayerGame();
+            };
+            // Restart buttons
+            document.getElementById('restartBtn').onclick = function() {
+                document.getElementById('gameOverMsg').style.display = 'none';
+                startSinglePlayerGame();
+            };
+            document.getElementById('mpRestartBtn').onclick = function() {
+                document.getElementById('mpGameOverMsg').style.display = 'none';
+                startMultiplayerGame();
+            };
+            // Pause button
+            document.getElementById('pauseBtn').onclick = function() {
+                singlePlayerPaused = !singlePlayerPaused;
+                if (!singlePlayerPaused && !gameOver) {
+                    window.singlePlayerGameLoop = requestAnimationFrame(drawSingle);
+                }
+            };
+        });
+    </script>
+    <script>
+        // --- Powerup Integration for Single Player ---
+        let nextPowerupLevels = [];
+        function resetPowerupLevels() {
+            // Pick 2 random, distinct levels in [current, current+9]
+            let base = Math.floor((level-1)/10)*10 + 1;
+            let levels = [];
+            while (levels.length < 2) {
+                let n = base + Math.floor(Math.random()*10);
+                if (!levels.includes(n)) levels.push(n);
+            }
+            nextPowerupLevels = levels.sort((a,b)=>a-b);
+        }
+        function maybeSpawnPowerup(level, canvas) {
+            if ((nextPowerupLevels.includes(level) && !powerupActive && !powerupReady)) {
+                powerupActive = true;
+                powerup = {
+                    x: Math.random() * (canvas.width - 40) + 20,
+                    y: 0,
+                    width: 36,
+                    height: 36,
+                    speed: 4,
+                    color: '#FFD700',
+                };
+                // Remove this level so it only triggers once per cycle
+                nextPowerupLevels = nextPowerupLevels.filter(l=>l!==level);
+            }
+        }
+        // On new game or every 10 levels, reset
+        function checkResetPowerupLevels() {
+            if (nextPowerupLevels.length === 0 || level%10===1) {
+                resetPowerupLevels();
+            }
+        }
+        // In startSinglePlayerGame, call resetPowerupLevels()
+        const oldStartSinglePlayerGame = startSinglePlayerGame;
+        startSinglePlayerGame = function() {
+            resetPowerupLevels();
+            oldStartSinglePlayerGame();
+        }
+        // In drawSingle, call checkResetPowerupLevels() at the start
+        const oldDrawSingle = drawSingle;
+        drawSingle = function() {
+            checkResetPowerupLevels();
+            oldDrawSingle();
+        }
+        // --- Powerup Usage: Destroy All Blocks with Effect ---
+        function usePowerup() {
+            // Function to mint NFT
+            async function mintNFT(item) {
+                try {
+                    // First, check if we can connect to the backend
+                    const testResponse = await fetch('http://localhost:3000/health', {
+                        method: 'GET',
+                        mode: 'cors',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    if (!testResponse.ok) {
+                        throw new Error('Cannot connect to backend server');
+                    }
+
+                    // Now try to mint the NFT
+                    const response = await fetch('http://localhost:3000/api/mint', {
+                        method: 'POST',
+                        mode: 'cors',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin': 'http://127.0.0.1:5502'
+                        },
+                        body: JSON.stringify({
+                            walletAddress: window.solana.publicKey.toString(),
+                            metadataUri: item.metadataUri,
+                            price: item.price
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Server returned error: ' + response.statusText);
+                    }
+
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('NFT minted successfully!');
+                    } else {
+                        throw new Error(data.error || 'Minting failed');
+                    }
+                } catch (error) {
+                    console.error('Minting error:', error);
+                    alert('Error minting NFT: ' + error.message);
+                }
+            }
+            if (powerupCount > 0 && !gameOver && !singlePlayerPaused) {
+                breakSound.play();
+                if (window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate([80, 40, 80]);
+                }
+                var canvas = document.getElementById('gameCanvas');
+                if (canvas) {
+                    let shakeFrames = 10;
+                    let shakeMagnitude = 10;
+                    let originalStyle = canvas.style.transform;
+                    let frame = 0;
+                    function doShake() {
+                        if (frame < shakeFrames) {
+                            let x = (Math.random() - 0.5) * shakeMagnitude;
+                            let y = (Math.random() - 0.5) * shakeMagnitude;
+                            canvas.style.transform = `translate(${x}px, ${y}px)`;
+                            frame++;
+                            requestAnimationFrame(doShake);
+                        } else {
+                            canvas.style.transform = originalStyle;
+                        }
+                    }
+                    doShake();
+                }
+                // Destroy all blocks instantly and add score for each
+                let blocksBroken = 0;
+                for (let b of bricks) {
+                    if (b.status === 1) {
+                        b.status = 0;
+                        blocksBroken++;
+                    }
+                }
+                if (blocksBroken > 0) {
+                    score += blocksBroken * (multiplier || 1);
+                    document.getElementById('score').innerText = Number(score).toFixed(4).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+                }
+                powerupCount--;
+                document.getElementById('powerupCount').innerText = 'Powerpoint ' + Math.max(0, powerupCount);
+                savePowerupCount();
+            }
+        }
+        // Powerup button handler
+        document.getElementById('powerupBtn').onclick = function() { usePowerup(); };
+    </script>
+    <!-- Debug Button -->
+    <button class="debug-button" onclick="checkLibraries()">Debug Environment</button>
+</body>
+</html>
