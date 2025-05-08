@@ -2,6 +2,7 @@
 
 ![Ball Breaker Game](BALL%20BLOCK%20BREAKER.jpg)
 
+<<<<<<< HEAD
 ## 🚀 Environment Setup
 
 1. **Clone the repository**
@@ -51,6 +52,8 @@ Edit the `config.js` file to customize the application settings. The following e
 - The `.gitignore` is already configured to exclude sensitive files
 - All sensitive configuration is loaded from environment variables
 
+=======
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
 ## 🚀 Overview
 Ball Breaker is an exciting arcade-style game where players control a paddle to bounce a ball and break blocks. The game features blockchain integration, allowing players to earn and trade NFTs based on their performance.
 

@@ -2,6 +2,7 @@
 <html lang="en">
 <!-- Copied from game.html, NFT Market section will render balls, only the section shell. -->
 <head>
+<<<<<<< HEAD
     <!-- Process and Buffer polyfills for Solana Web3.js - Must be first -->
     <script src="https://unpkg.com/process@0.11.10/browser.js"></script>
     <script>
@@ -77,11 +78,16 @@
         console.log('Buffer is available:', typeof window.Buffer);
         console.log('Buffer.from is function:', typeof window.Buffer.from === 'function');
     </script>
+=======
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="wallet-extension" content="none">
     <title>Ball Block Breaker</title>
+<<<<<<< HEAD
     <link rel="icon" type="image/jpeg" href="BALL BLOCK BREAKER.JPG">
+=======
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -251,6 +257,7 @@
         });
     </script>
     
+<<<<<<< HEAD
     <!-- Solana Web3.js -->
     <script src="https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.min.js"></script>
     
@@ -292,6 +299,11 @@
         window.splToken = splToken;
     </script>
 
+=======
+    <!-- Load Solana Web3 with a more recent version -->
+    <script src="https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.min.js"></script>
+    
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
     <!-- Load SPL Token with a more recent version -->
     <script src="https://unpkg.com/@solana/spl-token@0.3.10/lib/index.iife.js"></script>
     
@@ -838,6 +850,7 @@
             font-style: italic;
             margin: 20px 0;
         }
+<<<<<<< HEAD
         
         /* Airdrop Section */
         .coming-soon-badge {
@@ -900,6 +913,8 @@
             from { opacity: 0.5; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1.05); }
         }
+=======
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
     </style>
 </head>
 <body tabindex="0">
@@ -939,10 +954,13 @@
         <button class="main-menu-btn" id="startGameFlow">Start</button>
         <button class="main-menu-btn" id="openNFTMarket">NFT Market</button>
         <button class="main-menu-btn" id="leaderboardBtn">Leaderboard</button>
+<<<<<<< HEAD
         <button class="main-menu-btn" id="airdropBtn" style="position:relative; overflow:hidden;">
             Airdrop
             <div class="coming-soon-badge">COMING SOON</div>
         </button>
+=======
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
     </div>
     <!-- NFT Market Section -->
     <div class="landing-container hidden" id="nftMarketSection">
@@ -961,6 +979,7 @@
             <button class="wallet-button" id="backToMenuFromMode" style="min-width:180px;">Back</button>
         </div>
     </div>
+<<<<<<< HEAD
     <!-- Airdrop Section -->
     <div class="airdrop-container hidden" id="airdropSection">
         <div class="airdrop-content" style="max-width: 800px; width: 100%;">
@@ -982,6 +1001,8 @@
         </div>
     </div>
     
+=======
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
     <!-- Leaderboard Section -->
     <div class="leaderboard-container hidden" id="leaderboardSection">
         <h2>Global Leaderboard</h2>
@@ -1028,7 +1049,11 @@
             <button id="musicBtn" style="margin-left: 12px;">Music On</button>
             <button id="powerupBtn" style="margin-left: 12px;">Use Powerpoint</button>
         </div>
+<<<<<<< HEAD
         <canvas id="gameCanvas" width="800" height="600" style="max-width: 100%; height: auto; display: block; margin: 0 auto;"></canvas>
+=======
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
         <button id="startGamePlay" class="wallet-button" style="margin-top:24px;">Start</button>
         <div id="gameOverMsg" style="display: none; font-size: 36px; font-weight: bold; margin-top: 20px;"></div>
     </div>
@@ -1054,7 +1079,11 @@
             </select>
             <button id="musicBtn" style="margin-left: 12px;">Music On</button>
         </div>
+<<<<<<< HEAD
         <canvas id="mpCanvas" width="1000" height="700" style="max-width: 100%; height: auto; display: block; margin: 0 auto;"></canvas>
+=======
+        <canvas id="mpCanvas" width="1000" height="700"></canvas>
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
         <button id="startMultiGamePlay" class="wallet-button" style="margin-top:24px;">Start</button>
         <div id="mpGameOverMsg" style="display: none; font-size: 36px; font-weight: bold; margin-top: 20px;"></div>
     </div>
@@ -1543,6 +1572,7 @@
                     // 10. Get recent blockhash for the transaction
                     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                     
+<<<<<<< HEAD
                     // 11. Calculate lamports as number
                     const priceInLamports = Math.floor(Number(item.price) * 1e9);
                     
@@ -1618,6 +1648,22 @@
                         lamports: priceInLamports.toString(),
                         blockhash: blockhash
                     });
+=======
+                    // 11. Create transaction to transfer SOL
+                    const transaction = new solanaWeb3.Transaction({
+                        feePayer: publicKey,
+                        recentBlockhash: blockhash,
+                    });
+
+                    // Add transfer instruction
+                    const transferInstruction = solanaWeb3.SystemProgram.transfer({
+                        fromPubkey: publicKey,
+                        toPubkey: new solanaWeb3.PublicKey('4GP4w3DzugTWHMGJCQ3U8DqWjVQHgXajS9Px83jeUppG'),
+                        lamports: Math.floor(Number(item.price) * solanaWeb3.LAMPORTS_PER_SOL)
+                    });
+
+                    transaction.add(transferInstruction);
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
                     
                     // 12. Sign and send transaction
                     console.log('Sending transaction...');
@@ -1660,6 +1706,7 @@
                     updateTotalSupply(item.rarity, newSupply);
                     item.totalSupply = newSupply;
                     
+<<<<<<< HEAD
                     // Update available count immediately
                     item.available = item.maxSupply - newSupply;
                     
@@ -1669,6 +1716,8 @@
                         element.textContent = `Available: ${item.available}`;
                     });
                     
+=======
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
                     // Mark as owned in local storage
                     localStorage.setItem(ownershipKey, 'true');
                     
@@ -1678,6 +1727,7 @@
                         localStorage.setItem(`selected_ball_${publicKey}`, item.rarity);
                     }
                     
+<<<<<<< HEAD
                     // 16. Update the item's owned status and local storage
                     item.owned = true;
                     const itemOwnershipKey = `owns_${publicKey}_${item.rarity}`;
@@ -1804,6 +1854,18 @@
                     }
                     
                     // 18. Update the ball selection if this is the first NFT
+=======
+                    // 16. Update the item's owned status
+                    item.owned = true;
+                    
+                    // 17. Update UI
+                    renderNFTMarket();
+                    
+                    // 18. Show success message
+                    alert(`Successfully purchased ${item.name}!`);
+                    
+                    // 19. Update the ball selection if this is the first NFT
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
                     if (!selectedBall) {
                         selectBall(item.rarity);
                     }
@@ -1911,6 +1973,7 @@
                         multiplierElement.innerText = multiplier.toFixed(1) + 'x';
                     }
                     // Recalculate ball speed based on the new multiplier
+<<<<<<< HEAD
                     // Base speed with exponential growth, adjusted for device type
                     const baseSpeed = 3.0 + Math.pow(1.05, level-1);
                     
@@ -1946,6 +2009,15 @@
                     // Apply speed with a smooth transition
                     ball.dx = (ball.dx > 0 ? 1 : -1) * (ball.dx * speedFactor + speed * (1 - speedFactor));
                     ball.dy = (ball.dy > 0 ? 1 : -1) * (ball.dy * speedFactor + speed * (1 - speedFactor));
+=======
+                    const baseSpeed = 2.85 + (level-1)*0.18;
+                    const speedMultiplier = ballItem.rarity === 'legendary' ? 1.2 : 
+                                         ballItem.rarity === 'rare' ? 1.1 :
+                                         ballItem.rarity === 'uncommon' ? 1.05 : 1.0;
+                    const speed = baseSpeed * speedMultiplier;
+                    ball.dx = (ball.dx > 0 ? 1 : -1) * speed;
+                    ball.dy = (ball.dy > 0 ? 1 : -1) * speed;
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
                 }
             }
 
@@ -2621,6 +2693,7 @@
         document.addEventListener('touchmove', function(event) {
             let canvas = document.getElementById('gameCanvas');
             if (!canvas || !event.touches.length) return;
+<<<<<<< HEAD
             
             // Get touch position relative to canvas
             let rect = canvas.getBoundingClientRect();
@@ -2636,6 +2709,10 @@
                 const speed = 20; // Adjust this value for smoother movement
                 paddle.x += (targetX - paddle.x) * speed;
             }
+=======
+            let touchX = event.touches[0].clientX - canvas.getBoundingClientRect().left;
+            if (paddle) paddle.x = Math.max(0, Math.min(touchX - paddle.width / 2, canvas.width - paddle.width));
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
         }, { passive: false });
         document.addEventListener('keydown', function(e) {
             if ((e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') && paddle) {
@@ -2662,6 +2739,7 @@
             if (difficulty === 'hard') {
                 baseSpeed = 5; cpuSpeedBase = 16; obstacleInterval = 160;
             } else if (difficulty === 'medium') {
+<<<<<<< HEAD
                 baseSpeed = 3.5; cpuSpeedBase = 7; obstacleInterval = 240;
             } else { // easy
                 baseSpeed = 3.0; cpuSpeedBase = 2.7; obstacleInterval = 400;
@@ -2670,6 +2748,12 @@
             // Increase speed on mobile devices
             const isMobile = window.innerWidth <= 768;
             speed = isMobile ? speed * 1.5 : speed; // Increase speed by 50% on mobile
+=======
+                baseSpeed = 3.2; cpuSpeedBase = 7; obstacleInterval = 240;
+            } else { // easy
+                baseSpeed = 2.5; cpuSpeedBase = 2.7; obstacleInterval = 400;
+            }
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
             let speed = baseSpeed;
             let ball = {
                 x: canvas.width / 2,
@@ -2703,6 +2787,7 @@
                 ctx.fillStyle = ball.color;
                 ctx.fill();
                 ctx.closePath();
+<<<<<<< HEAD
                 
                 // Fix oval appearance on mobile
                 if (window.devicePixelRatio > 1) {
@@ -2712,6 +2797,8 @@
                     ctx.fill();
                     ctx.closePath();
                 }
+=======
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
             }
             function drawObstacles() {
                 for (let o of obstacles) {
@@ -2926,6 +3013,7 @@
         
         // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
+<<<<<<< HEAD
             // Add event listener for airdrop button
             const airdropBtn = document.getElementById('airdropBtn');
             const airdropSection = document.getElementById('airdropSection');
@@ -2951,6 +3039,8 @@
                 });
             }
             
+=======
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
             checkSupabaseAndInitialize();
             initializeWallet();
         });

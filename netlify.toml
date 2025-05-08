@@ -2,12 +2,26 @@
   publish = "."
   command = ""
 
+<<<<<<< HEAD
+=======
+[dev]
+  command = "npm run start"
+  port = 3000
+  publish = "."
+
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
 [[redirects]]
   from = "/*"
   to = "/newgame.html"
   status = 200
   force = false
 
+<<<<<<< HEAD
+=======
+[dev.proxy]
+  # No proxy needed for static site
+
+>>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
 [build.environment]
   NODE_VERSION = "16"
   NPM_VERSION = "8"
