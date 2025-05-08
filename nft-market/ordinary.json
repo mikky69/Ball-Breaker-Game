@@ -1,0 +1,44 @@
+{
+    "name": "Ordinary Ball",
+    "symbol": "OB",
+    "description": "Red Ball. Basic NFT. Limited Edition",
+    "seller_fee_basis_points": 500,
+    "image": "https://aquamarine-impressive-galliform-138.mypinata.cloud/ipfs/bafybeiax4hx4t2ohffk2e4p55e2f6hkmjg5nh2k62azw2ojkwmpkgjfaja/images/ordinary.svg",
+    "properties": {
+        "files": [
+            {
+                "uri": "https://aquamarine-impressive-galliform-138.mypinata.cloud/ipfs/bafybeiax4hx4t2ohffk2e4p55e2f6hkmjg5nh2k62azw2ojkwmpkgjfaja/images/ordinary.svg",
+                "type": "image/svg+xml"
+            }
+        ],
+        "category": "image",
+        "creators": [
+            {
+                "address": "4GP4w3DzugTWHMGJCQ3U8DqWjVQHgXajS9Px83jeUppG",
+                "share": 100
+            }
+        ]
+    },
+    "attributes": [
+        {
+            "trait_type": "Rarity",
+            "value": "Ordinary"
+        },
+        {
+            "trait_type": "Multiplier",
+            "value": 0.1
+        },
+        {
+            "trait_type": "Total Supply",
+            "value": 100000
+        },
+        {
+            "trait_type": "Price",
+            "value": "FREE"
+        },
+        {
+            "trait_type": "Color",
+            "value": "Red"
+        }
+    ]
+}

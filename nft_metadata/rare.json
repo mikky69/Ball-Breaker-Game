@@ -1,0 +1,25 @@
+{
+  "name": "Rare Ball",
+  "symbol": "BALL",
+  "description": "A rare NFT ball for the Ball Block Breaker game.",
+  "seller_fee_basis_points": 500,
+  "image": "ipfs://bafybeieknd7xwaakbilcneetzv2rmbzjygzohywgtbgp5pmmmkbmfccro4/images/rare_ball.svg",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "Rare"
+    },
+    {
+      "trait_type": "Color",
+      "value": "#9C27B0"
+    },
+    {
+      "trait_type": "Multiplier",
+      "value": 2
+    }
+  ],
+  "collection": {
+    "name": "Ball Breaker Balls",
+    "family": "Solana Game"
+  }
+}

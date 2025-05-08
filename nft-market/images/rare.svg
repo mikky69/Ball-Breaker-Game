@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="500px" height="500px" viewBox="0 0 500 500" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="250" cy="250" r="200" fill="#A020F0" />
+    <text x="250" y="260" font-family="Arial" font-size="40" fill="white" text-anchor="middle">Rare</text>
+    <text x="250" y="300" font-family="Arial" font-size="30" fill="white" text-anchor="middle">Ball</text>
+</svg>

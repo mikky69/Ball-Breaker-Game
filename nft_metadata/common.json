@@ -1,0 +1,25 @@
+{
+  "name": "Common Ball",
+  "symbol": "BALL",
+  "description": "A common NFT ball for the Ball Block Breaker game.",
+  "seller_fee_basis_points": 500,
+  "image": "ipfs://bafybeieknd7xwaakbilcneetzv2rmbzjygzohywgtbgp5pmmmkbmfccro4/images/common_ball.svg",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "Common"
+    },
+    {
+      "trait_type": "Color",
+      "value": "#4CAF50"
+    },
+    {
+      "trait_type": "Multiplier",
+      "value": 1.2
+    }
+  ],
+  "collection": {
+    "name": "Ball Breaker Balls",
+    "family": "Solana Game"
+  }
+}

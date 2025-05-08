@@ -1,0 +1,10 @@
+{
+  "name": "Original Ball",
+  "symbol": "BALL",
+  "description": "The original ball for Ball Block Breaker. Basic and classic.",
+  "image": "ipfs://<YOUR_CID>/images/original_ball.svg",
+  "attributes": [
+    { "trait_type": "Rarity", "value": "Original" },
+    { "trait_type": "Color", "value": "#FFFFFF" }
+  ]
+}

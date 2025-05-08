@@ -1,0 +1,16 @@
+[build]
+  publish = "."
+  command = ""
+
+[[redirects]]
+  from = "/*"
+  to = "/newgame.html"
+  status = 200
+  force = false
+
+[build.environment]
+  NODE_VERSION = "16"
+  NPM_VERSION = "8"
+
+[functions]
+  # No serverless functions needed for static site

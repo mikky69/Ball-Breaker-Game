@@ -1,0 +1,44 @@
+{
+    "name": "Legendary Ball",
+    "symbol": "LB",
+    "description": "Gold Ball. Legendary NFT. Limited Edition",
+    "seller_fee_basis_points": 500,
+    "image": "https://aquamarine-impressive-galliform-138.mypinata.cloud/ipfs/bafybeiax4hx4t2ohffk2e4p55e2f6hkmjg5nh2k62azw2ojkwmpkgjfaja/images/legendary.svg",
+    "properties": {
+        "files": [
+            {
+                "uri": "https://aquamarine-impressive-galliform-138.mypinata.cloud/ipfs/bafybeiax4hx4t2ohffk2e4p55e2f6hkmjg5nh2k62azw2ojkwmpkgjfaja/images/legendary.svg",
+                "type": "image/svg+xml"
+            }
+        ],
+        "category": "image",
+        "creators": [
+            {
+                "address": "4GP4w3DzugTWHMGJCQ3U8DqWjVQHgXajS9Px83jeUppG",
+                "share": 100
+            }
+        ]
+    },
+    "attributes": [
+        {
+            "trait_type": "Rarity",
+            "value": "Legendary"
+        },
+        {
+            "trait_type": "Multiplier",
+            "value": 8.0
+        },
+        {
+            "trait_type": "Total Supply",
+            "value": 5000
+        },
+        {
+            "trait_type": "Price",
+            "value": "3.43 SOL"
+        },
+        {
+            "trait_type": "Color",
+            "value": "Gold"
+        }
+    ]
+}
