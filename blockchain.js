@@ -9,19 +9,8 @@ const connection = new solanaWeb3.Connection(
 // Program ID (replace with your actual program ID after deployment)
 const PROGRAM_ID = 'YourProgramID11111111111111111111111111111';
 
-<<<<<<< HEAD
-// Import configuration
-const config = require('./config');
-
-// Use API URL from config
-const API_URL = config.api.url;
-
-// Log configuration (remove in production)
-console.log('Blockchain initialized with API:', API_URL);
-=======
 // Backend API URL
 const API_URL = 'http://localhost:3000';
->>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
 
 // Get current supply for a specific NFT type
 async function getNFTSupply(rarity) {
