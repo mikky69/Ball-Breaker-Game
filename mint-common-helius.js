@@ -5,7 +5,7 @@
 const axios = require('axios');
 
 // --- USER CONFIGURATION ---
-const HELIUS_API_KEY = 'f2aca6d6-5b59-4fbd-82f0-1b72dbd670a2';
+const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 const RECEIVER_WALLET = '4GP4w3DzugTWHMGJCQ3U8DqWjVQHgXajS9Px83jeUppG';
 const COMMON_METADATA_URI = 'https://aquamarine-impressive-galliform-138.mypinata.cloud/ipfs/bafkreihqorqpqcgw7eurhmeppalo3wbfwdzxyzw757tngtwqeudr7g5hvi?filename=common.json';
 // --- END USER CONFIGURATION ---
