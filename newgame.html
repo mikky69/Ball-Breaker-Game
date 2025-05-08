@@ -658,7 +658,16 @@
         document.addEventListener('DOMContentLoaded', function() {
             const connectBtn = document.getElementById('phantomWallet');
             const disconnectBtn = document.getElementById('disconnectWallet');
-            if (connectBtn) connectBtn.onclick = connectWallet;
+            if (connectBtn) {
+                connectBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    connectWallet();
+                });
+                connectBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    connectWallet();
+                });
+            }
             if (disconnectBtn) disconnectBtn.onclick = disconnectWallet;
             // Restore wallet UI if still connected
             if (window.solana && window.solana.isConnected && window.solana.publicKey) {
@@ -666,7 +675,123 @@
                 document.getElementById('phantomWallet').style.display = 'none';
                 document.getElementById('disconnectWallet').style.display = 'inline-block';
             }
+            
+            // Add event listener for connect button
+            if (connectBtn) {
+                connectBtn.addEventListener('click', connectWallet);
+                
+                // Add touch event handlers for mobile
+                connectBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    connectBtn.click();
+                });
+                
+                connectBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    connectBtn.click();
+                });
+            }
+
+            // Add event listener for disconnect button
+            if (disconnectBtn) {
+                disconnectBtn.addEventListener('click', disconnectWallet);
+                
+                // Add touch event handlers for mobile
+                disconnectBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    disconnectBtn.click();
+                });
+                
+                disconnectBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    disconnectBtn.click();
+                });
+            }
         });
+    </script>
+    <script>
+        // --- Airdrop Logic ---
+        function isPhantomInstalled() {
+            return window.solana && window.solana.isPhantom;
+        }
+        
+        async function getAirdrop() {
+            const walletErrorDiv = document.getElementById('walletError');
+            walletErrorDiv.textContent = '';
+            
+            if (!isPhantomInstalled()) {
+                walletErrorDiv.textContent = 'Phantom Wallet not installed!';
+                return;
+            }
+            
+            try {
+                const resp = await window.solana.connect();
+                const walletAddress = resp.publicKey.toString();
+                document.getElementById('walletAddress').textContent = 'Connected: ' + walletAddress;
+                document.getElementById('phantomWallet').style.display = 'none';
+                document.getElementById('disconnectWallet').style.display = 'inline-block';
+                loadPowerupCount();
+                
+                const el = document.getElementById('powerupCount');
+                if (el) el.innerText = 'Powerpoint ' + Math.max(0, powerupCount);
+            } catch (err) {
+                walletErrorDiv.textContent = 'Wallet connection failed!';
+                console.error('Wallet connection error:', err);
+            }
+        }
+        // Add event listener for airdrop button
+        const airdropBtn = document.getElementById('airdropBtn');
+        if (airdropBtn) {
+            // Click handler
+            airdropBtn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                try {
+                    const wallet = window.solana?.publicKey?.toString();
+                    if (!wallet) {
+                        alert('Please connect your wallet first!');
+                        return;
+                    }
+
+                    const response = await fetch('http://localhost:3000/api/airdrop', {
+                        method: 'POST',
+                        mode: 'cors',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin': 'http://127.0.0.1:5502'
+                        },
+                        body: JSON.stringify({
+                            walletAddress: wallet
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to get airdrop');
+                    }
+
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('Airdrop received!');
+                    } else {
+                        alert('Failed to get airdrop: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Airdrop error:', error);
+                    alert('Error getting airdrop: ' + error.message);
+                }
+            });
+
+            // Touch handlers
+            airdropBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                airdropBtn.click();
+            });
+
+            airdropBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                airdropBtn.click();
+            });
+        }
     </script>
     <style>
         html, body { font-size: 20px; }
@@ -2306,9 +2431,51 @@
         let lastFrameTime = 0;
         let frameCount = 0;
         let lastFpsUpdate = 0;
-        let deltaTime = 0;
         const targetFps = 60;
         const frameTime = 1000 / targetFps;
+        
+        // Add touch controls for mobile
+        let touchStartX = 0;
+        let touchMoveX = 0;
+        let isTouching = false;
+        let lastTouchTime = 0;
+        const touchThreshold = 100; // Minimum time between touches
+        
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            touchStartX = e.touches[0].clientX;
+            isTouching = true;
+            lastTouchTime = performance.now();
+        });
+        
+        canvas.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            if (isTouching) {
+                touchMoveX = e.touches[0].clientX;
+                const delta = touchMoveX - touchStartX;
+                const newPaddleX = paddle.x + delta * 0.8;
+                
+                // Smooth paddle movement
+                window.paddleX = Math.max(0, Math.min(canvas.width - paddle.width, 
+                    newPaddleX));
+                
+                // Update touch start position for next movement
+                touchStartX = touchMoveX;
+                
+                // Prevent rapid touch events
+                const currentTime = performance.now();
+                if (currentTime - lastTouchTime < touchThreshold) {
+                    return;
+                }
+                lastTouchTime = currentTime;
+            }
+        });
+        
+        canvas.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            isTouching = false;
+            lastTouchTime = 0;
+        });
         
         function startSinglePlayerGame() {
             score = 0;
@@ -2334,7 +2501,7 @@
             // Apply multiplier to speed for different rarities
             const speedMultiplier = selectedBall.rarity === 'legendary' ? 1.25 : 
                                  selectedBall.rarity === 'rare' ? 1.15 :
-                                 selectedBall.rarity === 'uncommon' ? 1.075 : 1.0;
+                                 selectedBall.rarity === 'uncommon' ? 1.075 : 1.1;
             
             // Update the multiplier display
             const multiplierElement = document.getElementById('multiplier');
@@ -2358,6 +2525,8 @@
                 height: 20,
                 x: (canvas.width - 120) / 2,
                 color: '#33FF57',
+                speed: 7,
+                friction: 0.95
             };
             bricks = [];
             nextBrickIndex = 0;
@@ -2417,9 +2586,33 @@
             drawBallSingle(ctx);
             drawPaddleSingle(ctx);
             drawPowerup(ctx);
-            // Ball movement
+            // Ball movement with paddle collision check
             ball.x += ball.dx;
             ball.y += ball.dy;
+            
+            // Check for paddle collision
+            if (ball.y + ball.radius >= canvas.height - paddle.height && 
+                ball.y + ball.radius <= canvas.height && 
+                ball.x + ball.radius >= paddle.x && 
+                ball.x - ball.radius <= paddle.x + paddle.width && 
+                ball.dy > 0) {
+                
+                // Calculate hit point for angle adjustment
+                let hitPoint = ((ball.x - paddle.x) / paddle.width) * 2 - 1;
+                let maxBounceAngle = Math.PI / 3;
+                let bounceAngle = hitPoint * maxBounceAngle;
+                
+                // Calculate new velocity based on hit point
+                let speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+                ball.dx = speed * Math.sin(bounceAngle);
+                ball.dy = -Math.abs(speed * Math.cos(bounceAngle));
+                
+                // Add score
+                score += 1 * (multiplier || 1);
+                
+                // Play hit sound
+                hitSound.play();
+            }
             // Powerup movement
             if (powerupActive && powerup) {
                 powerup.y += powerup.speed;
@@ -2537,11 +2730,15 @@
         }
         function drawPaddleSingle(ctx) {
             let canvas = document.getElementById('gameCanvas');
-            ctx.beginPath();
-            ctx.rect(paddle.x, canvas.height - paddle.height, paddle.width, paddle.height);
             ctx.fillStyle = paddle.color;
-            ctx.fill();
-            ctx.closePath();
+            ctx.fillRect(paddle.x, canvas.height - paddle.height, paddle.width, paddle.height);
+            
+            // Update paddle position based on mouse/touch position
+            if (typeof window.paddleX !== 'undefined') {
+                // Smooth paddle movement
+                paddle.x = window.paddleX;
+                delete window.paddleX; // Clean up after use
+            }
         }
         function drawPowerup(ctx) {
             if (powerupActive && powerup) {
@@ -2666,7 +2863,7 @@
         }, { passive: false });
         document.addEventListener('keydown', function(e) {
             if ((e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') && paddle) {
-                paddle.x = Math.max(0, paddle.x - 30);
+                paddle.x = Math.max(0, Math.min(paddle.x - 30, canvas.width - paddle.width));
             }
             if ((e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') && paddle) {
                 paddle.x = Math.min(canvas.width - paddle.width, paddle.x + 30);
@@ -2970,7 +3167,19 @@
             const closeAirdrop = document.getElementById('closeAirdrop');
             
             if (airdropBtn && airdropSection) {
-                airdropBtn.addEventListener('click', function() {
+                airdropBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Hide all sections
+                    document.querySelectorAll('div[id$="Section"]').forEach(section => {
+                        section.classList.add('hidden');
+                    });
+                    // Show only the airdrop section
+                    airdropSection.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden'; // Prevent scrolling
+                });
+                
+                airdropBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
                     // Hide all sections
                     document.querySelectorAll('div[id$="Section"]').forEach(section => {
                         section.classList.add('hidden');
