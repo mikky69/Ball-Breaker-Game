@@ -11,7 +11,8 @@ app.use(express.json());
 app.use(cors());
 
 // Load mint authority
-const secret = JSON.parse(fs.readFileSync(process.env.MINT_AUTHORITY_KEYPAIR, 'utf8'));
+const secretKeyPath = process.env.MINT_AUTHORITY_KEYPAIR || 'mint_authority.json';
+const secret = JSON.parse(fs.readFileSync(secretKeyPath, 'utf8'));
 const mintAuthority = Keypair.fromSecretKey(Uint8Array.from(secret));
 
 const connection = new Connection(process.env.SOLANA_RPC_URL, 'confirmed');
