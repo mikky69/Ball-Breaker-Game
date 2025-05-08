@@ -16,7 +16,6 @@
 [dev.proxy]
   # No proxy needed for static site
 
->>>>>>> 9fcd87850b59634e752d74c1102e8c1e91df8c53
 [build.environment]
   NODE_VERSION = "16"
   NPM_VERSION = "8"
