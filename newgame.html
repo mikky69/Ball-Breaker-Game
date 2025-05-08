@@ -3326,50 +3326,80 @@
     <script>
         // --- Event Listeners for Navigation and Game Start ---
         document.addEventListener('DOMContentLoaded', function() {
+            // Function to add both click and touch event handlers
+            function addEventHandlers(element, callback) {
+                if (!element) return;
+                
+                // Add click handler
+                element.addEventListener('click', callback);
+                
+                // Add touch handlers
+                element.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    callback();
+                });
+                
+                element.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    callback();
+                });
+            }
+
             // Section navigation
-            document.getElementById('startGameFlow').onclick = function() {
+            addEventHandlers(document.getElementById('startGameFlow'), function() {
                 showSection('modeSelectSection');
-            };
-            document.getElementById('singlePlayerBtn').onclick = function() {
+            });
+            
+            addEventHandlers(document.getElementById('singlePlayerBtn'), function() {
                 showSection('gameSection');
                 startSinglePlayerGame();
-            };
-            document.getElementById('multiPlayerBtn').onclick = function() {
+            });
+            
+            addEventHandlers(document.getElementById('multiPlayerBtn'), function() {
                 showSection('multiSection');
                 startMultiplayerGame();
-            };
-            document.getElementById('backToMenuFromMode').onclick = function() {
+            });
+            
+            addEventHandlers(document.getElementById('backToMenuFromMode'), function() {
                 showSection('mainMenuSection');
-            };
-            document.getElementById('backBtn').onclick = function() {
+            });
+            
+            addEventHandlers(document.getElementById('backBtn'), function() {
                 showSection('modeSelectSection');
-            };
-            document.getElementById('mpBackBtn').onclick = function() {
+            });
+            
+            addEventHandlers(document.getElementById('mpBackBtn'), function() {
                 showSection('modeSelectSection');
-            };
-            document.getElementById('leaderboardBtn').onclick = function() {
+            });
+            
+            addEventHandlers(document.getElementById('leaderboardBtn'), function() {
                 showSection('leaderboardSection');
                 updateCurrentUserAddress();
                 renderLeaderboards();
-            };
-            document.getElementById('backToMenuFromLeaderboard').onclick = function() {
+            });
+            
+            addEventHandlers(document.getElementById('backToMenuFromLeaderboard'), function() {
                 showSection('mainMenuSection');
-            };
-            document.getElementById('openNFTMarket').onclick = function() {
+            });
+            
+            addEventHandlers(document.getElementById('openNFTMarket'), function() {
                 showSection('nftMarketSection');
                 renderNFTMarket();
-            };
-            document.getElementById('backToMenuFromNFTMarket').onclick = function() {
+            });
+            
+            addEventHandlers(document.getElementById('backToMenuFromNFTMarket'), function() {
                 showSection('mainMenuSection');
-            };
+            });
+            
             // Single player game start
-            document.getElementById('startGamePlay').onclick = function() {
+            addEventHandlers(document.getElementById('startGamePlay'), function() {
                 this.style.display = 'none';
                 document.getElementById('gameOverMsg').style.display = 'none';
                 startSinglePlayerGame();
-            };
+            });
+            
             // Multiplayer game start
-            document.getElementById('startMultiGamePlay').onclick = function() {
+            addEventHandlers(document.getElementById('startMultiGamePlay'), function() {
                 // Hide the start button and game over message
                 this.style.display = 'none';
                 document.getElementById('mpGameOverMsg').style.display = 'none';
@@ -3380,23 +3410,35 @@
                 
                 // Start the game
                 startMultiplayerGame();
-            };
+            });
+            
             // Restart buttons
-            document.getElementById('restartBtn').onclick = function() {
+            addEventHandlers(document.getElementById('restartBtn'), function() {
                 document.getElementById('gameOverMsg').style.display = 'none';
                 startSinglePlayerGame();
-            };
-            document.getElementById('mpRestartBtn').onclick = function() {
+            });
+            
+            addEventHandlers(document.getElementById('mpRestartBtn'), function() {
                 document.getElementById('mpGameOverMsg').style.display = 'none';
                 startMultiplayerGame();
-            };
+            });
+            
             // Pause button
-            document.getElementById('pauseBtn').onclick = function() {
+            addEventHandlers(document.getElementById('pauseBtn'), function() {
                 singlePlayerPaused = !singlePlayerPaused;
-                if (!singlePlayerPaused && !gameOver) {
-                    window.singlePlayerGameLoop = requestAnimationFrame(drawSingle);
+                if (singlePlayerPaused) {
+                    cancelAnimationFrame(singlePlayerGameLoop);
+                    document.getElementById('pauseBtn').innerHTML = 'Resume';
+                } else {
+                    singlePlayerGameLoop = requestAnimationFrame(drawSingle);
+                    document.getElementById('pauseBtn').innerHTML = 'Pause';
                 }
-            };
+            });
+            
+            // Powerup button
+            addEventHandlers(document.getElementById('powerupBtn'), function() {
+                usePowerup();
+            });
         });
     </script>
     <script>
