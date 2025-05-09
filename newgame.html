@@ -310,8 +310,8 @@
                 return;
             }
 
-            const supabaseUrl = process.env.SUPABASE_URL || 'https://snnptmpgyykohcmwyxze.supabase.co';
-            const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNubnB0bXBneXlrb2hjbXd5eHplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1NzEzODUsImV4cCI6MjA2MjE0NzM4NX0.uGUlRHLBYopMxbxoU0nXVKDUCnSbLA4Ft5Wt1GJzu0w';
+            const supabaseUrl = 'https://snnptmpgyykohcmwyxze.supabase.co';
+            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNubnB0bXBneXlrb2hjbXd5eHplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1NzEzODUsImV4cCI6MjA2MjE0NzM4NX0.uGUlRHLBYopMxbxoU0nXVKDUCnSbLA4Ft5Wt1GJzu0w';
             
             if (!supabaseUrl || !supabaseKey) {
                 console.error('Supabase URL or Key is missing');
@@ -658,16 +658,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const connectBtn = document.getElementById('phantomWallet');
             const disconnectBtn = document.getElementById('disconnectWallet');
-            if (connectBtn) {
-                connectBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    connectWallet();
-                });
-                connectBtn.addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    connectWallet();
-                });
-            }
+            if (connectBtn) connectBtn.onclick = connectWallet;
             if (disconnectBtn) disconnectBtn.onclick = disconnectWallet;
             // Restore wallet UI if still connected
             if (window.solana && window.solana.isConnected && window.solana.publicKey) {
@@ -675,123 +666,7 @@
                 document.getElementById('phantomWallet').style.display = 'none';
                 document.getElementById('disconnectWallet').style.display = 'inline-block';
             }
-            
-            // Add event listener for connect button
-            if (connectBtn) {
-                connectBtn.addEventListener('click', connectWallet);
-                
-                // Add touch event handlers for mobile
-                connectBtn.addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    connectBtn.click();
-                });
-                
-                connectBtn.addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    connectBtn.click();
-                });
-            }
-
-            // Add event listener for disconnect button
-            if (disconnectBtn) {
-                disconnectBtn.addEventListener('click', disconnectWallet);
-                
-                // Add touch event handlers for mobile
-                disconnectBtn.addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    disconnectBtn.click();
-                });
-                
-                disconnectBtn.addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    disconnectBtn.click();
-                });
-            }
         });
-    </script>
-    <script>
-        // --- Airdrop Logic ---
-        function isPhantomInstalled() {
-            return window.solana && window.solana.isPhantom;
-        }
-        
-        async function getAirdrop() {
-            const walletErrorDiv = document.getElementById('walletError');
-            walletErrorDiv.textContent = '';
-            
-            if (!isPhantomInstalled()) {
-                walletErrorDiv.textContent = 'Phantom Wallet not installed!';
-                return;
-            }
-            
-            try {
-                const resp = await window.solana.connect();
-                const walletAddress = resp.publicKey.toString();
-                document.getElementById('walletAddress').textContent = 'Connected: ' + walletAddress;
-                document.getElementById('phantomWallet').style.display = 'none';
-                document.getElementById('disconnectWallet').style.display = 'inline-block';
-                loadPowerupCount();
-                
-                const el = document.getElementById('powerupCount');
-                if (el) el.innerText = 'Powerpoint ' + Math.max(0, powerupCount);
-            } catch (err) {
-                walletErrorDiv.textContent = 'Wallet connection failed!';
-                console.error('Wallet connection error:', err);
-            }
-        }
-        // Add event listener for airdrop button
-        const airdropBtn = document.getElementById('airdropBtn');
-        if (airdropBtn) {
-            // Click handler
-            airdropBtn.addEventListener('click', async function(e) {
-                e.preventDefault();
-                try {
-                    const wallet = window.solana?.publicKey?.toString();
-                    if (!wallet) {
-                        alert('Please connect your wallet first!');
-                        return;
-                    }
-
-                    const response = await fetch('http://localhost:3000/api/airdrop', {
-                        method: 'POST',
-                        mode: 'cors',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Origin': 'http://127.0.0.1:5502'
-                        },
-                        body: JSON.stringify({
-                            walletAddress: wallet
-                        })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Failed to get airdrop');
-                    }
-
-                    const data = await response.json();
-                    if (data.success) {
-                        alert('Airdrop received!');
-                    } else {
-                        alert('Failed to get airdrop: ' + data.error);
-                    }
-                } catch (error) {
-                    console.error('Airdrop error:', error);
-                    alert('Error getting airdrop: ' + error.message);
-                }
-            });
-
-            // Touch handlers
-            airdropBtn.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                airdropBtn.click();
-            });
-
-            airdropBtn.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                airdropBtn.click();
-            });
-        }
     </script>
     <style>
         html, body { font-size: 20px; }
@@ -2431,51 +2306,9 @@
         let lastFrameTime = 0;
         let frameCount = 0;
         let lastFpsUpdate = 0;
+        let deltaTime = 0;
         const targetFps = 60;
         const frameTime = 1000 / targetFps;
-        
-        // Add touch controls for mobile
-        let touchStartX = 0;
-        let touchMoveX = 0;
-        let isTouching = false;
-        let lastTouchTime = 0;
-        const touchThreshold = 100; // Minimum time between touches
-        
-        canvas.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-            touchStartX = e.touches[0].clientX;
-            isTouching = true;
-            lastTouchTime = performance.now();
-        });
-        
-        canvas.addEventListener('touchmove', function(e) {
-            e.preventDefault();
-            if (isTouching) {
-                touchMoveX = e.touches[0].clientX;
-                const delta = touchMoveX - touchStartX;
-                const newPaddleX = paddle.x + delta * 0.8;
-                
-                // Smooth paddle movement
-                window.paddleX = Math.max(0, Math.min(canvas.width - paddle.width, 
-                    newPaddleX));
-                
-                // Update touch start position for next movement
-                touchStartX = touchMoveX;
-                
-                // Prevent rapid touch events
-                const currentTime = performance.now();
-                if (currentTime - lastTouchTime < touchThreshold) {
-                    return;
-                }
-                lastTouchTime = currentTime;
-            }
-        });
-        
-        canvas.addEventListener('touchend', function(e) {
-            e.preventDefault();
-            isTouching = false;
-            lastTouchTime = 0;
-        });
         
         function startSinglePlayerGame() {
             score = 0;
@@ -2501,7 +2334,7 @@
             // Apply multiplier to speed for different rarities
             const speedMultiplier = selectedBall.rarity === 'legendary' ? 1.25 : 
                                  selectedBall.rarity === 'rare' ? 1.15 :
-                                 selectedBall.rarity === 'uncommon' ? 1.075 : 1.1;
+                                 selectedBall.rarity === 'uncommon' ? 1.075 : 1.0;
             
             // Update the multiplier display
             const multiplierElement = document.getElementById('multiplier');
@@ -2525,8 +2358,6 @@
                 height: 20,
                 x: (canvas.width - 120) / 2,
                 color: '#33FF57',
-                speed: 7,
-                friction: 0.95
             };
             bricks = [];
             nextBrickIndex = 0;
@@ -2586,33 +2417,9 @@
             drawBallSingle(ctx);
             drawPaddleSingle(ctx);
             drawPowerup(ctx);
-            // Ball movement with paddle collision check
+            // Ball movement
             ball.x += ball.dx;
             ball.y += ball.dy;
-            
-            // Check for paddle collision
-            if (ball.y + ball.radius >= canvas.height - paddle.height && 
-                ball.y + ball.radius <= canvas.height && 
-                ball.x + ball.radius >= paddle.x && 
-                ball.x - ball.radius <= paddle.x + paddle.width && 
-                ball.dy > 0) {
-                
-                // Calculate hit point for angle adjustment
-                let hitPoint = ((ball.x - paddle.x) / paddle.width) * 2 - 1;
-                let maxBounceAngle = Math.PI / 3;
-                let bounceAngle = hitPoint * maxBounceAngle;
-                
-                // Calculate new velocity based on hit point
-                let speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
-                ball.dx = speed * Math.sin(bounceAngle);
-                ball.dy = -Math.abs(speed * Math.cos(bounceAngle));
-                
-                // Add score
-                score += 1 * (multiplier || 1);
-                
-                // Play hit sound
-                hitSound.play();
-            }
             // Powerup movement
             if (powerupActive && powerup) {
                 powerup.y += powerup.speed;
@@ -2730,15 +2537,11 @@
         }
         function drawPaddleSingle(ctx) {
             let canvas = document.getElementById('gameCanvas');
+            ctx.beginPath();
+            ctx.rect(paddle.x, canvas.height - paddle.height, paddle.width, paddle.height);
             ctx.fillStyle = paddle.color;
-            ctx.fillRect(paddle.x, canvas.height - paddle.height, paddle.width, paddle.height);
-            
-            // Update paddle position based on mouse/touch position
-            if (typeof window.paddleX !== 'undefined') {
-                // Smooth paddle movement
-                paddle.x = window.paddleX;
-                delete window.paddleX; // Clean up after use
-            }
+            ctx.fill();
+            ctx.closePath();
         }
         function drawPowerup(ctx) {
             if (powerupActive && powerup) {
@@ -2815,24 +2618,6 @@
             let mouseX = event.clientX - canvas.getBoundingClientRect().left;
             if (paddle) paddle.x = Math.max(0, Math.min(mouseX - paddle.width / 2, canvas.width - paddle.width));
         });
-        document.addEventListener('touchstart', function(event) {
-            let canvas = document.getElementById('gameCanvas');
-            if (!canvas || !event.touches.length) return;
-            
-            // Get touch position relative to canvas
-            let rect = canvas.getBoundingClientRect();
-            let touchX = event.touches[0].clientX - rect.left;
-            
-            // Convert to canvas coordinates
-            let scaleX = canvas.width / rect.width;
-            let canvasX = touchX * scaleX;
-            
-            if (paddle) {
-                paddle.x = Math.max(0, Math.min(canvasX - paddle.width / 2, canvas.width - paddle.width));
-            }
-            event.preventDefault();
-        }, { passive: false });
-
         document.addEventListener('touchmove', function(event) {
             let canvas = document.getElementById('gameCanvas');
             if (!canvas || !event.touches.length) return;
@@ -2851,19 +2636,10 @@
                 const speed = 20; // Adjust this value for smoother movement
                 paddle.x += (targetX - paddle.x) * speed;
             }
-            event.preventDefault();
-        }, { passive: false });
-
-        document.addEventListener('touchend', function(event) {
-            if (paddle) {
-                // Reset paddle position if needed
-                paddle.x = Math.max(0, Math.min(paddle.x, canvas.width - paddle.width));
-            }
-            event.preventDefault();
         }, { passive: false });
         document.addEventListener('keydown', function(e) {
             if ((e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') && paddle) {
-                paddle.x = Math.max(0, Math.min(paddle.x - 30, canvas.width - paddle.width));
+                paddle.x = Math.max(0, paddle.x - 30);
             }
             if ((e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') && paddle) {
                 paddle.x = Math.min(canvas.width - paddle.width, paddle.x + 30);
@@ -2891,20 +2667,8 @@
                 baseSpeed = 3.0; cpuSpeedBase = 2.7; obstacleInterval = 400;
             }
             
-            // Adjust speed based on device type and screen size
-            const isMobile = window.innerWidth <= 768;
-            const isSmallScreen = window.innerWidth <= 480;
-            
-            // Base speed adjustments
+            // Initialize speed
             let speed = baseSpeed;
-            if (isMobile) {
-                speed *= 1.3; // Increase speed for mobile devices
-                if (isSmallScreen) {
-                    speed *= 1.1; // Additional boost for smaller screens
-                }
-            } else {
-                speed *= 1.2; // Slight boost for desktop
-            }
             let ball = {
                 x: canvas.width / 2,
                 y: canvas.height / 2,
@@ -2912,7 +2676,6 @@
                 dx: speed * (Math.random() > 0.5 ? 1 : -1),
                 dy: -speed,
                 color: '#FFD700',
-                speed: speed // Store the initial speed
             };
             let paddle1 = { width: 160, height: 20, x: (canvas.width - 160) / 2, color: '#33FF57' };
             let paddle2 = { width: 160, height: 20, x: (canvas.width - 160) / 2, color: '#3357FF' };
@@ -3063,14 +2826,16 @@
                 }
                 multiPlayerGameLoop = requestAnimationFrame(draw);
             }
-            document.onkeydown = function(e) {
+            // Set up keyboard event listeners
+            document.addEventListener('keydown', function(e) {
                 if (e.key === 'ArrowLeft') paddle1.x = Math.max(0, Math.min(paddle1.x - 30, canvas.width - paddle1.width));
                 if (e.key === 'ArrowRight') paddle1.x = Math.max(0, Math.min(paddle1.x + 30, canvas.width - paddle1.width));
                 if (opponent === 'player') {
                     if (e.key === 'a' || e.key === 'A') paddle2.x = Math.max(0, Math.min(paddle2.x - 30, canvas.width - paddle2.width));
                     if (e.key === 'd' || e.key === 'D') paddle2.x = Math.max(0, Math.min(paddle2.x + 30, canvas.width - paddle2.width));
                 }
-            };
+            });
+            // Set up mouse event listener
             canvas.addEventListener('mousemove', function(e) {
                 let rect = canvas.getBoundingClientRect();
                 let x = (e.clientX - rect.left) - paddle1.width / 2;
@@ -3167,19 +2932,7 @@
             const closeAirdrop = document.getElementById('closeAirdrop');
             
             if (airdropBtn && airdropSection) {
-                airdropBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    // Hide all sections
-                    document.querySelectorAll('div[id$="Section"]').forEach(section => {
-                        section.classList.add('hidden');
-                    });
-                    // Show only the airdrop section
-                    airdropSection.classList.remove('hidden');
-                    document.body.style.overflow = 'hidden'; // Prevent scrolling
-                });
-                
-                airdropBtn.addEventListener('touchstart', function(e) {
-                    e.preventDefault();
+                airdropBtn.addEventListener('click', function() {
                     // Hide all sections
                     document.querySelectorAll('div[id$="Section"]').forEach(section => {
                         section.classList.add('hidden');
@@ -3535,119 +3288,70 @@
     <script>
         // --- Event Listeners for Navigation and Game Start ---
         document.addEventListener('DOMContentLoaded', function() {
-            // Function to add both click and touch event handlers
-            function addEventHandlers(element, callback) {
-                if (!element) return;
-                
-                // Add click handler
-                element.addEventListener('click', callback);
-                
-                // Add touch handlers
-                element.addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    callback();
-                });
-                
-                element.addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    callback();
-                });
-            }
-
             // Section navigation
-            addEventHandlers(document.getElementById('startGameFlow'), function() {
+            document.getElementById('startGameFlow').onclick = function() {
                 showSection('modeSelectSection');
-            });
-            
-            addEventHandlers(document.getElementById('singlePlayerBtn'), function() {
+            };
+            document.getElementById('singlePlayerBtn').onclick = function() {
                 showSection('gameSection');
                 startSinglePlayerGame();
-            });
-            
-            addEventHandlers(document.getElementById('multiPlayerBtn'), function() {
+            };
+            document.getElementById('multiPlayerBtn').onclick = function() {
                 showSection('multiSection');
                 startMultiplayerGame();
-            });
-            
-            addEventHandlers(document.getElementById('backToMenuFromMode'), function() {
+            };
+            document.getElementById('backToMenuFromMode').onclick = function() {
                 showSection('mainMenuSection');
-            });
-            
-            addEventHandlers(document.getElementById('backBtn'), function() {
+            };
+            document.getElementById('backBtn').onclick = function() {
                 showSection('modeSelectSection');
-            });
-            
-            addEventHandlers(document.getElementById('mpBackBtn'), function() {
+            };
+            document.getElementById('mpBackBtn').onclick = function() {
                 showSection('modeSelectSection');
-            });
-            
-            addEventHandlers(document.getElementById('leaderboardBtn'), function() {
+            };
+            document.getElementById('leaderboardBtn').onclick = function() {
                 showSection('leaderboardSection');
                 updateCurrentUserAddress();
                 renderLeaderboards();
-            });
-            
-            addEventHandlers(document.getElementById('backToMenuFromLeaderboard'), function() {
+            };
+            document.getElementById('backToMenuFromLeaderboard').onclick = function() {
                 showSection('mainMenuSection');
-            });
-            
-            addEventHandlers(document.getElementById('openNFTMarket'), function() {
+            };
+            document.getElementById('openNFTMarket').onclick = function() {
                 showSection('nftMarketSection');
                 renderNFTMarket();
-            });
-            
-            addEventHandlers(document.getElementById('backToMenuFromNFTMarket'), function() {
+            };
+            document.getElementById('backToMenuFromNFTMarket').onclick = function() {
                 showSection('mainMenuSection');
-            });
-            
+            };
             // Single player game start
-            addEventHandlers(document.getElementById('startGamePlay'), function() {
+            document.getElementById('startGamePlay').onclick = function() {
                 this.style.display = 'none';
                 document.getElementById('gameOverMsg').style.display = 'none';
                 startSinglePlayerGame();
-            });
-            
+            };
             // Multiplayer game start
-            addEventHandlers(document.getElementById('startMultiGamePlay'), function() {
-                // Hide the start button and game over message
+            document.getElementById('startMultiGamePlay').onclick = function() {
                 this.style.display = 'none';
                 document.getElementById('mpGameOverMsg').style.display = 'none';
-                
-                // Show the multiplayer section
-                const multiSection = document.getElementById('multiSection');
-                if (multiSection) multiSection.classList.remove('hidden');
-                
-                // Start the game
                 startMultiplayerGame();
-            });
-            
+            };
             // Restart buttons
-            addEventHandlers(document.getElementById('restartBtn'), function() {
+            document.getElementById('restartBtn').onclick = function() {
                 document.getElementById('gameOverMsg').style.display = 'none';
                 startSinglePlayerGame();
-            });
-            
-            addEventHandlers(document.getElementById('mpRestartBtn'), function() {
+            };
+            document.getElementById('mpRestartBtn').onclick = function() {
                 document.getElementById('mpGameOverMsg').style.display = 'none';
                 startMultiplayerGame();
-            });
-            
+            };
             // Pause button
-            addEventHandlers(document.getElementById('pauseBtn'), function() {
+            document.getElementById('pauseBtn').onclick = function() {
                 singlePlayerPaused = !singlePlayerPaused;
-                if (singlePlayerPaused) {
-                    cancelAnimationFrame(singlePlayerGameLoop);
-                    document.getElementById('pauseBtn').innerHTML = 'Resume';
-                } else {
-                    singlePlayerGameLoop = requestAnimationFrame(drawSingle);
-                    document.getElementById('pauseBtn').innerHTML = 'Pause';
+                if (!singlePlayerPaused && !gameOver) {
+                    window.singlePlayerGameLoop = requestAnimationFrame(drawSingle);
                 }
-            });
-            
-            // Powerup button
-            addEventHandlers(document.getElementById('powerupBtn'), function() {
-                usePowerup();
-            });
+            };
         });
     </script>
     <script>
