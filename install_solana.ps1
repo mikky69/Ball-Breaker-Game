@@ -4,8 +4,13 @@
 # 2. Native installation (if Docker is not available)
 
 param(
-    [switch]$UseDocker = $true
+    [switch]$UseDocker
 )
+
+# Set default value for UseDocker
+if (-not $UseDocker) {
+    $UseDocker = $true
+}
 
 # Check if running as administrator (only needed for native installation)
 if (-not $UseDocker) {
@@ -21,7 +26,7 @@ function Install-WithDocker {
     
     # Check if Docker is installed and running
     try {
-        $dockerInfo = docker info 2>&1
+        docker info 2>&1
         if ($LASTEXITCODE -ne 0) {
             throw "Docker is not running"
         }
