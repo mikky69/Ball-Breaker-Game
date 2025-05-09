@@ -13,6 +13,8 @@ if (-not $UseDocker) {
 }
 
 # Check if running as administrator (only needed for native installation)
+
+# Check if running as administrator (only needed for native installation)
 if (-not $UseDocker) {
     $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     if (-not $isAdmin) {
